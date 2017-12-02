@@ -1,7 +1,7 @@
 ---
 title: "SGU 2017 Science or Fiction Stats"
 author: "Wayne Heller"
-date: "November 5, 2017"
+date: "December 2, 2017"
 output: html_document
 ---
 
@@ -23,16 +23,20 @@ The Skeptics Guide to the Universe is a weekly podcast hosted by Dr. Steven Nove
 ## Year End Episode
 At the end of the calendar year, Dr. Novella host a year in review episode where the panel reviews their performance at Science or Fiction.  
 
-## Summary Facts
+## 2017 Summary Facts - Through Episode #647
 
-* Evan is in the lead of overall win percentage
-* Bob's perception that segments with themes are harder isn't true overall but is true for him
-* Cara's and Jay's performances are better on segments with themes than without
-* The panel performs better overall when Bob answers first
-* There have been 6 panelist sweeps to date and 4 hosts sweeps, 1 by Evan and 3 by Steve
+* Cara is in the lead of overall win percentage  
+* Bob's perception that segments with themes are harder isn't true overall but is true for him and Evan  
+* Cara's performance is much better on segments with themes than without, Jay's is better as well    
+* The panel performs better overall when Evan or Bob answer first
+* There have been 6 panelist sweeps to date and 6 hosts sweeps, 1 by Evan and 5 by Steve  
+* Cara has the longest consecutive win streak 6 between episodes 618 - 623
+* Jay has the longest consecutive losing streak 5 between episoes 624 - 631
 
-## 2017 Summary Statistics - Through Episode #641
-**NOTE: ALL includes contributions from Special Guest Rogues not listed**
+## 2017 Summary Statistics - Through Episode #647
+**NOTE: ALL includes contributions from Special Guest Rogues not listed**  
+Raw data and some visuals are located in [This Excel file](https://github.com/wayneheller/SGU_Science_or_Fiction/blob/master/SGU_Science_or_Fiction.xlsx) Click the Download button on this github page.
+
 ``` {r readstats, echo = FALSE}
 pathtofile <- file.path("..",'SGU_Science_or_Fiction.xlsx')
 dfSGUSummary <- readxl::read_excel(pathtofile, sheet = 3 )
@@ -105,3 +109,10 @@ showStatistic('Host Sweeps', ispercentage = FALSE)
 ``` {r PanelSweeps, echo = FALSE}
 showStatistic('Panelist Sweeps', ispercentage = FALSE)
 ```
+
+## Some Visuals
+![](../plots/overall.PNG)
+
+![](../plots/withthemes.PNG)
+
+![](../plots/withoutthemes.PNG)
