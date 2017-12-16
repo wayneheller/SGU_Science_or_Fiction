@@ -25,12 +25,13 @@ At the end of the calendar year, Dr. Novella host a year in review episode where
 
 ## 2017 Summary Facts - Through Episode #649
 
-* Cara ends the year with the highest overall win percentage  
+* Cara ends the year with the highest overall win percentage, followed by Evan  
+* Evan has the most solo wins, followed by Bob
 * Bob's perception that segments with themes are harder isn't true overall but is true for him and Evan  
 * Cara's performance is much better on segments with themes than without, Jay's is better as well    
 * The panel performs better overall when Evan or Bob answer first 
 * As expected, answering first is a disadvantage, particularly for Bob which is interesting given that the panel performs the best when Bob answers first.
-* Evan has the best performance answering first and he was called on to answer first the fewest times
+* Evan has the best performance answering first, and he was called on to answer first the fewest times
 * There have been 7 panelist sweeps to date and 6 hosts sweeps, 1 by Evan and 5 by Steve  
 * Cara has the longest consecutive win streak 6 between episodes 618 - 623
 * Jay has the longest consecutive losing streak 5 between episoes 624 - 631
@@ -75,6 +76,11 @@ showStatistic('% Wins Overall')
 #names(winsOverall2) <- names(winsOverall)
 #kable(sort(winsOverall2, decreasing = TRUE), format.args = list(justify='right', width=20) , rownames=TRUE, digits=2)
 
+```
+
+### Solo Wins
+``` {r SoloWins, echo = FALSE}
+showStatistic('Solo Wins', ispercentage = FALSE)
 ```
 
 ### Win Percentage For Segments WITH Themes
