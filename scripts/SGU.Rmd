@@ -1,7 +1,7 @@
 ---
 title: "SGU 2017 Science or Fiction Stats"
 author: "Wayne Heller"
-date: "December 2, 2017"
+date: "December 16, 2017"
 output: html_document
 ---
 
@@ -23,17 +23,19 @@ The Skeptics Guide to the Universe is a weekly podcast hosted by Dr. Steven Nove
 ## Year End Episode
 At the end of the calendar year, Dr. Novella host a year in review episode where the panel reviews their performance at Science or Fiction.  
 
-## 2017 Summary Facts - Through Episode #647
+## 2017 Summary Facts - Through Episode #649
 
-* Cara is in the lead of overall win percentage  
+* Cara ends the year with the highest overall win percentage  
 * Bob's perception that segments with themes are harder isn't true overall but is true for him and Evan  
 * Cara's performance is much better on segments with themes than without, Jay's is better as well    
-* The panel performs better overall when Evan or Bob answer first
-* There have been 6 panelist sweeps to date and 6 hosts sweeps, 1 by Evan and 5 by Steve  
+* The panel performs better overall when Evan or Bob answer first 
+* As expected, answering first is a disadvantage, particularly for Bob which is interesting given that the panel performs the best when Bob answers first.
+* Evan has the best performance answering first and he was called on to answer first the fewest times
+* There have been 7 panelist sweeps to date and 6 hosts sweeps, 1 by Evan and 5 by Steve  
 * Cara has the longest consecutive win streak 6 between episodes 618 - 623
 * Jay has the longest consecutive losing streak 5 between episoes 624 - 631
 
-## 2017 Summary Statistics - Through Episode #647
+## 2017 Summary Statistics - Through Episode #649
 **NOTE: ALL includes contributions from Special Guest Rogues not listed**  
 Raw data and some visuals are located in [This Excel file](https://github.com/wayneheller/SGU_Science_or_Fiction/blob/master/SGU_Science_or_Fiction.xlsx) Click the Download button on this github page.
 
@@ -95,9 +97,14 @@ showStatistic('Longest Winning Streak', ispercentage = FALSE)
 showStatistic('Longest Losing Streak', ispercentage = FALSE)
 ```
 
-### Panelist Performance When Answering First
+### Panel Performance When Answering First
 ``` {r PanelPerformance, echo = FALSE}
 showStatistic('Panel Performance When Answering First')
+```
+
+### Individual Panelist Performance When Answering First
+``` {r PanelistPerformance, echo = FALSE}
+showStatistic('Panelist Performance When Answering First')
 ```
 
 ### Host Sweeps
