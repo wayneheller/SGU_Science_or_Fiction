@@ -23,17 +23,17 @@ The Skeptics Guide to the Universe is a weekly podcast hosted by Dr. Steven Nove
 ## Year End Episode
 At the end of the calendar year, Dr. Novella host a year in review episode where the panel reviews their performance at Science or Fiction.  
 
-## 2018 Summary Facts - Through Episodes #652 - 687 (Through DragonCon Episode)
+## 2018 Summary Facts - Episodes #652 - 687 (Beginning of Year Through DragonCon)
 
 * Evan is in the lead this year with the highest overall win percentage, followed by Cara  
 * Evan has the most solo wins, followed by Cara.
 * Bob's perception that segments with themes are harder isn't true overall but is true for him  
 * Cara's performance is much better on segments with themes than without. 
-* The panel performs better overall when Cara or Evan answer first 
+* The panel performs better overall when Cara answers first 
 * Relative to other panelists, Bob does well when he is the first to answer.
-* There have been 8 panelist sweeps to date (compared to 7 in all of 2017) and 3 hosts sweeps, 1 by Bob and 2 by Steve (Steve had 5 host sweeps last year).    
+* There have been 9 panelist sweeps to date (compared to 7 in all of 2017) and 3 hosts sweeps, 1 by Bob and 2 by Steve (Steve had 5 host sweeps last year).    
 
-## 2018 Summary Statistics - Through Episode #652 - 686 
+## 2018 Summary Statistics - Episodes #652 - 687 
 **NOTE: ALL includes contributions from Special Guest Rogues not listed**  
 Raw data and some visuals are located in [This Excel file](https://github.com/wayneheller/SGU_Science_or_Fiction/blob/master/SGU_Science_or_Fiction.xlsx) Click the Download button on this github page.  
 

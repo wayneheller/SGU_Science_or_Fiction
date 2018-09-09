@@ -63,7 +63,7 @@ readSGUSummary <- function() {
     
 }
 
-
+calcSGUSummary <- function() {
     pathtofile <- file.path(getwd(),'SGU_Science_or_Fiction.xlsx')
     dfEpisodeData <- readxl::read_excel(pathtofile, sheet = 1 )
     dfEpisodeData <- as.data.frame(dfEpisodeData)
@@ -109,11 +109,11 @@ readSGUSummary <- function() {
     # Panelist Performance without Themes
     dfPanelistPerf %>% filter(Episode %in% dfEpisodeData[is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = sum(Correct)/n())
     # Panelist Performance When Answering First
-    dfEpisodeData %>% group_by(FirstPanelist) %>% summarise(PanelPerformance = sum(CorrectAnswers)/sum(TotalPanelists))
-    
+    print(dfEpisodeData %>% group_by(FirstPanelist) %>% summarise(PanelPerformance = sum(CorrectAnswers)/sum(TotalPanelists)))
+    View(dfEpisodeData)
     # Longest Winning Streak
     df <- dfItemsSelected %>% filter(Panelist =='Bob')
     
     # not working yet max(diff(cumsum(df$Correct), 1))
-    
+}  
     
