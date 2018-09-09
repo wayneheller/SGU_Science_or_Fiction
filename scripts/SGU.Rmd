@@ -1,7 +1,7 @@
 ---
-title: "SGU 2017 Science or Fiction Stats"
+title: "SGU 2018 Science or Fiction Stats"
 author: "Wayne Heller"
-date: "December 30, 2017"
+date: "September 8, 2018"
 output: html_document
 ---
 
@@ -23,27 +23,23 @@ The Skeptics Guide to the Universe is a weekly podcast hosted by Dr. Steven Nove
 ## Year End Episode
 At the end of the calendar year, Dr. Novella host a year in review episode where the panel reviews their performance at Science or Fiction.  
 
-## 2017 Summary Facts - Through Episode #651
+## 2018 Summary Facts - Through Episodes #652 - 687 (Through DragonCon Episode)
 
-* Cara ends the year with the highest overall win percentage, followed by Evan  
-* Evan and Bob have the most solo wins.
-* Bob's perception that segments with themes are harder isn't true overall but is true for him and Evan  
-* Cara's performance is much better on segments with themes than without, Jay's is better as well    
-* The panel performs better overall when Evan or Bob answer first 
-* As expected, answering first is a disadvantage, particularly for Bob which is interesting given that the panel performs the best when Bob answers first.
-* Evan has the best performance answering first, and he was called on to answer first the fewest times
-* There have been 7 panelist sweeps to date and 6 hosts sweeps, 1 by Evan and 5 by Steve  
-* Cara has the longest consecutive win streak 6 between episodes 618 - 623
-* Jay has the longest consecutive losing streak 5 between episoes 624 - 631
+* Evan is in the lead this year with the highest overall win percentage, followed by Cara  
+* Evan has the most solo wins, followed by Cara.
+* Bob's perception that segments with themes are harder isn't true overall but is true for him  
+* Cara's performance is much better on segments with themes than without. 
+* The panel performs better overall when Cara or Evan answer first 
+* Relative to other panelists, Bob does well when he is the first to answer.
+* There have been 8 panelist sweeps to date (compared to 7 in all of 2017) and 3 hosts sweeps, 1 by Bob and 2 by Steve (Steve had 5 host sweeps last year).    
 
-## 2017 Summary Statistics - Through Episode #651
+## 2018 Summary Statistics - Through Episode #652 - 686 
 **NOTE: ALL includes contributions from Special Guest Rogues not listed**  
 Raw data and some visuals are located in [This Excel file](https://github.com/wayneheller/SGU_Science_or_Fiction/blob/master/SGU_Science_or_Fiction.xlsx) Click the Download button on this github page.  
-One update subsequent to the year end show: added results from Episode 650 that was recorded but had not been published prior to the year end live stream and added results from Episode 651 which was the recorded version of the year end live stream.
 
 ``` {r readstats, echo = FALSE}
 pathtofile <- file.path("..",'SGU_Science_or_Fiction.xlsx')
-dfSGUSummary <- readxl::read_excel(pathtofile, sheet = 3 )
+dfSGUSummary <- readxl::read_excel(pathtofile, sheet = 5 )
 dfSGUSummary <- as.data.frame(dfSGUSummary)
 rownames(dfSGUSummary) <- dfSGUSummary$Statistic
 dfSGUSummary <- select(dfSGUSummary, -Statistic)
@@ -105,11 +101,14 @@ showStatistic('Longest Losing Streak', ispercentage = FALSE)
 ```
 
 ### Panel Performance When Answering First
+#### A measure of how well the other rogues perform based on who answers first
+
 ``` {r PanelPerformance, echo = FALSE}
 showStatistic('Panel Performance When Answering First')
 ```
 
 ### Individual Panelist Performance When Answering First
+#### A measure of an individuals performance when answering first
 ``` {r PanelistPerformance, echo = FALSE}
 showStatistic('Panelist Performance When Answering First')
 ```
@@ -120,13 +119,10 @@ showStatistic('Host Sweeps', ispercentage = FALSE)
 ```
 
 ### Panelist Sweeps
+#### How many times a panelist has participated in a sweep of the host
 ``` {r PanelSweeps, echo = FALSE}
 showStatistic('Panelist Sweeps', ispercentage = FALSE)
 ```
 
 ## Some Visuals
 ![](../plots/overall.PNG)
-
-![](../plots/withthemes.PNG)
-
-![](../plots/withoutthemes.PNG)
