@@ -14,6 +14,7 @@ library(readxl)
 library(dplyr)
 library(reshape2)
 library(knitr)
+library(scales)
 
 ```
 
@@ -47,6 +48,36 @@ Rogues <- c("Steve", "Bob", "Evan", "Cara", "Jay")
 dfSGUSummary <- select(dfSGUSummary, c(Rogues, "ALL"))
 dfSGUSummary <- t(dfSGUSummary)
 
+# New Version Below
+dfEpisodeData <- readxl::read_excel(pathtofile, sheet = 1 )
+dfEpisodeData <- as.data.frame(dfEpisodeData)
+dfEpisodeData <- select(dfEpisodeData, 1:8)
+    
+    
+dfItemsSelected <- readxl::read_excel(pathtofile, sheet =2)
+dfItemsSelected <- as.data.frame(dfItemsSelected)
+dfItemsSelected <- select(dfItemsSelected, c('Episode', 'Panelist', 'ItemSelected', 'AnsweringOrder'))
+    
+
+dfFictionItems <- select(dfEpisodeData, c('Episode', 'FictionItem'))
+dfItemsSelected <- inner_join(dfItemsSelected, dfFictionItems, by='Episode')
+dfItemsSelected$Correct <- mapply(ifelse, test = (dfItemsSelected$ItemSelected == dfItemsSelected$FictionItem), yes = 1, no = 0 )
+dfPanelistPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist) %>% filter(Panelist %in% Rogues) %>% group_by(Panelist)
+dfOverallPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist) # %>% filter(Panelist %in% Rogues)
+
+# Append number correct for each episode
+dfCorrect <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% summarise(CorrectAnswers = sum(Correct)))
+dfEpisodeData <- inner_join(dfEpisodeData, dfCorrect, by='Episode')
+
+# Append panelist who answered first for each episode
+dfFirstPanelist <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% filter(AnsweringOrder==1) %>% select(Episode, FirstPanelist = Panelist))
+dfEpisodeData <- inner_join(dfEpisodeData, dfFirstPanelist, by='Episode')
+
+# Append number of panelists for each episode
+dfTotalPanelists <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% summarise(TotalPanelists = n()) %>% select(Episode, TotalPanelists))
+dfEpisodeData <- inner_join(dfEpisodeData, dfTotalPanelists, by='Episode')
+
+
 showStatistic <- function(statName, ispercentage = TRUE) {
     myStat <- dfSGUSummary[, statName]
     myStat <- na.exclude(myStat)
@@ -58,9 +89,16 @@ showStatistic <- function(statName, ispercentage = TRUE) {
     }
     names(myStat2) <- names(myStat)
     
-    kable(sort(myStat2, decreasing = TRUE), format.args = list(justify='right', width=500) , rownames=TRUE, digits=2, align = c('l', 'l'), format='html', table.attr = "style='width:15%;'")
+    kable(sort(myStat2, decreasing = TRUE), format.args = list(justify='right', width=500) , rownames=TRUE, col.names=NA, digits=2, align = c('l', 'l'), format='html', table.attr = "style='width:15%;'")
 
 }
+
+showStatistic_2 <- function(lstResults, ispercentage = TRUE) {
+    
+    kable(lstResults, format.args = list(justify='right', width=500) , rownames=TRUE, col.names=NULL, digits=1, align = c('l', 'l'), format='html', table.attr = "style='width:15%;'")
+
+}
+
 ```
 
 ### Overall Win Percentage
@@ -68,36 +106,74 @@ showStatistic <- function(statName, ispercentage = TRUE) {
 ``` {r winsOverall, echo = FALSE}
 showStatistic('% Wins Overall')
 
-#winsOverall <- dfSGUSummary[, '% Wins Overall']
-#winsOverall2 <- sprintf("%.1f%%", winsOverall*100)
-#names(winsOverall2) <- names(winsOverall)
-#kable(sort(winsOverall2, decreasing = TRUE), format.args = list(justify='right', width=20) , rownames=TRUE, digits=2)
+# Overall Performance
+stat <- dfPanelistPerf %>% summarise(Overall =  percent(sum(Correct)/n())) 
+total <- dfOverallPerf %>% summarise(Overall =  percent(sum(Correct)/n())) 
+print('-----')
+stat <- rbind(stat,c("ALL", total[1,1])) %>% arrange(desc(Overall))
+showStatistic_2(stat)
 
-```
 
-### Solo Wins
-``` {r SoloWins, echo = FALSE}
-showStatistic('Solo Wins', ispercentage = FALSE)
 ```
 
 ### Win Percentage For Segments WITH Themes
 ``` {r winsThemes, echo = FALSE}
 showStatistic('% Wins with Themes')
+print('-----')
+stat <- dfPanelistPerf %>% filter(Episode %in% dfEpisodeData[!is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
+total <- dfOverallPerf %>% filter(Episode %in% dfEpisodeData[!is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
+stat <- rbind(stat,c("ALL", total[1,1])) %>% arrange(desc(pctThemes))
+showStatistic_2(stat)
 ```
 
 ### Win Percentage For Segments WITHOUT Themes
 ``` {r winswithoutThemes, echo = FALSE}
 showStatistic('% Wins without Themes')
+print('-----')
+stat <- dfPanelistPerf %>% filter(Episode %in% dfEpisodeData[is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n()))
+total <- dfOverallPerf %>% filter(Episode %in% dfEpisodeData[is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
+stat <- rbind(stat,c("ALL", total[1,1])) %>% arrange(desc(pctThemes))
+showStatistic_2(stat)
+```
+
+### Solo Wins
+``` {r SoloWins, echo = FALSE}
+showStatistic('Solo Wins', ispercentage = FALSE)
+print('-----')
+dfSoloWins <- dfItemsSelected[dfItemsSelected$Episode %in% dfEpisodeData[dfEpisodeData$CorrectAnswers==1, 'Episode'] & dfItemsSelected$Correct==1, c('Episode', 'Panelist')]
+stat <- dfSoloWins %>% group_by(Panelist) %>% summarise(SoloWins = n()) %>% arrange(desc(SoloWins))
+total <- dfSoloWins  %>% summarise(SoloWins = n()) 
+stat <- rbind(stat,c("TOTAL", total[1,1])) 
+showStatistic_2(stat)
 ```
 
 ### Longest Consecutive Winning Streak
 ``` {r WinStreak, echo = FALSE}
 showStatistic('Longest Winning Streak', ispercentage = FALSE)
+print('-----')
+wins = list()
+losses = list()
+for (rogue in Rogues) {
+    df <- dfItemsSelected %>% filter(Panelist == rogue)
+    x = rle(df$Correct)
+    wins[rogue] = max(x$lengths[x$values == 1])
+    losses[rogue] = max(x$lengths[x$values == 0])
+}
+wins <- wins[order(unlist(wins),decreasing=TRUE)]
+wins <- wins[wins >= 0]
+stat <- t(as.data.frame(wins))
+
+showStatistic_2(stat)
 ```
 
 ### Longest Consecutive Losing Streak
 ``` {r LoseStreak, echo = FALSE}
 showStatistic('Longest Losing Streak', ispercentage = FALSE)
+print('-----')
+losses <- losses[order(unlist(losses),decreasing=TRUE)]
+losses <- losses[losses >= 0]
+stat <- t(as.data.frame(losses))
+showStatistic_2(stat)
 ```
 
 ### Panel Performance When Answering First
@@ -105,23 +181,40 @@ showStatistic('Longest Losing Streak', ispercentage = FALSE)
 
 ``` {r PanelPerformance, echo = FALSE}
 showStatistic('Panel Performance When Answering First')
+print('-----')
+stat <- dfEpisodeData %>% filter(FirstPanelist %in% Rogues) %>% group_by(FirstPanelist) %>% summarise(PanelPerformance = percent(sum(CorrectAnswers)/sum(TotalPanelists))) %>% arrange(desc(PanelPerformance))
+showStatistic_2(stat)
 ```
 
 ### Individual Panelist Performance When Answering First
 #### A measure of an individuals performance when answering first
 ``` {r PanelistPerformance, echo = FALSE}
 showStatistic('Panelist Performance When Answering First')
+print('-----')
+stat <- dfPanelistPerf %>% filter(AnsweringOrder==1) %>% summarise(pctAnsweringFirst = percent(sum(Correct)/n())) %>% arrange(desc(pctAnsweringFirst))
+total <- dfOverallPerf %>% filter(AnsweringOrder==1) %>% summarise(pctAnsweringFirst = percent(sum(Correct)/n())) %>% arrange(desc(pctAnsweringFirst))
+stat <- rbind(stat,c("ALL", total[1,1])) %>% arrange(desc(pctAnsweringFirst))
+showStatistic_2(stat)
 ```
 
 ### Host Sweeps
 ``` {r Host Sweeps, echo = FALSE}
 showStatistic('Host Sweeps', ispercentage = FALSE)
+print('-----')
+dfHostSweeps <- dfEpisodeData[dfEpisodeData$CorrectAnswers==0, c('Episode', 'Host')]
+stat <- dfHostSweeps %>% group_by(Host) %>% summarize(HostSweeps = n()) %>% arrange(desc(HostSweeps))
+total <- dfHostSweeps %>% summarize(HostSweeps = n())
+stat <- rbind(stat,c("TOTAL", total[1,1])) 
+showStatistic_2(stat)
 ```
 
 ### Panelist Sweeps
 #### How many times a panelist has participated in a sweep of the host
 ``` {r PanelSweeps, echo = FALSE}
 showStatistic('Panelist Sweeps', ispercentage = FALSE)
+print('-----')
+stat <- dfItemsSelected[dfItemsSelected$Episode %in% dfEpisodeData[dfEpisodeData$CorrectAnswers == dfEpisodeData$TotalPanelists,"Episode"],] %>% group_by(Panelist) %>% summarise(PanelistSweeps = n()) %>% arrange(desc(PanelistSweeps))
+showStatistic_2(stat)
 ```
 
 ## Some Visuals

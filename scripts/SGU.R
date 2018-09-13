@@ -64,6 +64,7 @@ readSGUSummary <- function() {
 }
 
 calcSGUSummary <- function() {
+    Rogues <- c("Steve", "Bob", "Evan", "Cara", "Jay")
     pathtofile <- file.path(getwd(),'SGU_Science_or_Fiction.xlsx')
     dfEpisodeData <- readxl::read_excel(pathtofile, sheet = 1 )
     dfEpisodeData <- as.data.frame(dfEpisodeData)
@@ -100,8 +101,14 @@ calcSGUSummary <- function() {
     dfHostSweeps %>% group_by(Host) %>% summarize(HostSweeps = n())
     
     dfPanelistPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist) %>% group_by(Panelist)
+    #dfPanelistPerf <- as.data.frame(dfPanelistPerf)
+    
     # Overall Performance
-    dfPanelistPerf %>% summarise(pctAnsweringFirst = sum(Correct)/n())
+    print(dfPanelistPerf %>% summarise(pctAnsweringFirst = sum(Correct)/n()))
+    stat <- dfPanelistPerf %>% summarise(pctAnsweringFirst = sum(Correct)/n())
+    print(stat['pctAnsweringFirst']*100)
+    #print(percent(stat['pctAnsweringFirst']))
+    
     # Panelist Performance When Answering First
     dfPanelistPerf %>% filter(AnsweringOrder==1) %>% summarise(pctAnsweringFirst = sum(Correct)/n())
     # Panelist Performance with Themes
@@ -109,11 +116,22 @@ calcSGUSummary <- function() {
     # Panelist Performance without Themes
     dfPanelistPerf %>% filter(Episode %in% dfEpisodeData[is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = sum(Correct)/n())
     # Panelist Performance When Answering First
-    print(dfEpisodeData %>% group_by(FirstPanelist) %>% summarise(PanelPerformance = sum(CorrectAnswers)/sum(TotalPanelists)))
-    View(dfEpisodeData)
+    dfEpisodeData %>% group_by(FirstPanelist) %>% summarise(PanelPerformance = sum(CorrectAnswers)/sum(TotalPanelists))
     # Longest Winning Streak
-    df <- dfItemsSelected %>% filter(Panelist =='Bob')
-    
-    # not working yet max(diff(cumsum(df$Correct), 1))
+    wins = list()
+    losses = list()
+    for (rogue in Rogues) {
+        df <- dfItemsSelected %>% filter(Panelist == rogue)
+        x = rle(df$Correct)
+        wins[rogue] = max(x$lengths[x$values == 1])
+        losses[rogue] = max(x$lengths[x$values == 0])
+    }
+    dfConsecWins <- t(as.data.frame(wins))
+    dfConsecLosses <- t(as.data.frame(losses))
+
+   #Panelist Sweeps
+    View(dfEpisodeData)
+    print(dfEpisodeData[dfEpisodeData$CorrectAnswers == dfEpisodeData$TotalPanelists,"Episode"])
+    print(dfItemsSelected[dfItemsSelected$Episode %in% dfEpisodeData[dfEpisodeData$CorrectAnswers == dfEpisodeData$TotalPanelists,"Episode"],])
 }  
     
