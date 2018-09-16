@@ -2,8 +2,45 @@
 library(readxl)
 library(dplyr)
 library(reshape2)
+library(rvest)
+library(qdapRegex)
+library(stringr)
     
-
+scrapeAnswerText <- function() {
+    url <- "https://www.theskepticsguide.org/podcast/sgu/587"
+    webpage <- read_html(url)
+    
+    #Using CSS selectors to scrap the rankings section
+    item_html <- html_nodes(webpage, xpath = "//div[@class='podcast-segment' and contains(., 'Science or Fiction')]/child::*")
+    
+    #item_html <- html_nodes(webpage, xpath=".//div[contains(., 'Kod umowy:') and contains(@class, 'col-sm-3')]/following-sibling::div[2]") %>% 
+        #html_text()
+    
+    #Converting  to text
+    item_data <- html_text(item_html)
+    
+    #Remove any urls
+    item_data <- rm_url(item_data)
+    
+    #Remove section heading 'Science or Fiction'
+    question_block <- toString(item_data[2])
+    
+    #Split into individual questions
+    questions <- str_split(question_block, "Item #. ")
+    
+    #Remove first item from list (always blank) as a consequence of split
+    questions <- questions[[1]][-1]
+    
+    # Remove the Science and Fiction identifiers
+    mysub <- function(question_text) {
+        tmp <- sub("^Fiction ", "", question_text)
+        tmp <- sub("^Science ", "", tmp)
+        return(tmp)
+    }
+    
+    questions <- unlist(lapply(questions, mysub ))
+    print(questions)
+}
 
 readSGUData_old <- function() {
     #dfEpisodes <- read.xlsx('SGU_Science_or_Fiction.xlsx', sheetIndex = 1, startRow =1,
