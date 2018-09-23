@@ -7,9 +7,9 @@ library(qdapRegex)
 library(stringr)
     
 scrapeAnswerText <- function() {
-    url <- "https://www.theskepticsguide.org/podcast/sgu/587"
+    url <- "https://www.theskepticsguide.org/podcast/sgu/1000"
     webpage <- read_html(url)
-    
+   
     #Using CSS selectors to scrap the rankings section
     item_html <- html_nodes(webpage, xpath = "//div[@class='podcast-segment' and contains(., 'Science or Fiction')]/child::*")
     

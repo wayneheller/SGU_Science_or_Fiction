@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, fig.width = 18, fig.height = 14)
 ```
 
 ``` {r loaddata, echo=FALSE}
@@ -15,6 +15,9 @@ library(dplyr)
 library(reshape2)
 library(knitr)
 library(scales)
+library(ggplot2)
+library(gridExtra)
+library(forcats)
 
 debug_flag = FALSE # See description below.  If TRUE, will show the summarization values
 Episode_range = 652:687
@@ -75,11 +78,12 @@ dfItemsSelected <- select(dfItemsSelected, c('Episode', 'Panelist', 'ItemSelecte
 dfItemsSelected <- filter(dfItemsSelected, Episode %in% Episode_range)
     
 
-dfFictionItems <- select(dfEpisodeData, c('Episode', 'FictionItem'))
+dfFictionItems <- select(dfEpisodeData, c('Episode', 'FictionItem', 'Theme'))
 dfItemsSelected <- inner_join(dfItemsSelected, dfFictionItems, by='Episode')
 dfItemsSelected$Correct <- mapply(ifelse, test = (dfItemsSelected$ItemSelected == dfItemsSelected$FictionItem), yes = 1, no = 0 )
-dfPanelistPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist) %>% filter(Panelist %in% Rogues) %>% group_by(Panelist)
-dfOverallPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist) # %>% filter(Panelist %in% Rogues)
+dfItemsSelected$Theme <- mapply(ifelse, test = !is.na(dfItemsSelected$Theme), yes = 'With Theme', no = 'Without Theme')
+dfPanelistPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist, Theme) %>% filter(Panelist %in% Rogues) 
+dfOverallPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist, Theme) # %>% filter(Panelist %in% Rogues)
 
 # Append number correct for each episode
 dfCorrect <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% summarise(CorrectAnswers = sum(Correct)))
@@ -126,7 +130,7 @@ showStatistic('% Wins Overall')
 
 ``` {r winsOverall, echo = FALSE}
 # Overall Performance
-stat <- dfPanelistPerf %>% summarise(Overall =  percent(sum(Correct)/n())) 
+stat <- dfPanelistPerf %>% group_by(Panelist) %>% summarise(Overall =  percent(sum(Correct)/n())) 
 total <- dfOverallPerf %>% summarise(Overall =  percent(sum(Correct)/n())) 
 stat <- rbind(stat,c("ALL", total[1,1])) %>% arrange(desc(Overall))
 showStatistic_2(stat)
@@ -138,7 +142,7 @@ showStatistic('% Wins with Themes')
 ```
 
 ``` {r winsThemes, echo = FALSE}
-stat <- dfPanelistPerf %>% filter(Episode %in% dfEpisodeData[!is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
+stat <- dfPanelistPerf %>% group_by(Panelist) %>% filter(Episode %in% dfEpisodeData[!is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
 total <- dfOverallPerf %>% filter(Episode %in% dfEpisodeData[!is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
 stat <- rbind(stat,c("ALL", total[1,1])) %>% arrange(desc(pctThemes))
 showStatistic_2(stat)
@@ -150,7 +154,7 @@ showStatistic('% Wins without Themes')
 ```
 
 ``` {r winswithoutThemes, echo = FALSE}
-stat <- dfPanelistPerf %>% filter(Episode %in% dfEpisodeData[is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n()))
+stat <- dfPanelistPerf %>% group_by(Panelist) %>% filter(Episode %in% dfEpisodeData[is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n()))
 total <- dfOverallPerf %>% filter(Episode %in% dfEpisodeData[is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
 stat <- rbind(stat,c("ALL", total[1,1])) %>% arrange(desc(pctThemes))
 showStatistic_2(stat)
@@ -218,7 +222,7 @@ showStatistic_2(stat)
 showStatistic('Panelist Performance When Answering First')
 ```
 ``` {r PanelistPerformance, echo = FALSE}
-stat <- dfPanelistPerf %>% filter(AnsweringOrder==1) %>% summarise(pctAnsweringFirst = percent(sum(Correct)/n())) %>% arrange(desc(pctAnsweringFirst))
+stat <- dfPanelistPerf %>% group_by(Panelist) %>% filter(AnsweringOrder==1) %>% summarise(pctAnsweringFirst = percent(sum(Correct)/n())) %>% arrange(desc(pctAnsweringFirst))
 total <- dfOverallPerf %>% filter(AnsweringOrder==1) %>% summarise(pctAnsweringFirst = percent(sum(Correct)/n())) %>% arrange(desc(pctAnsweringFirst))
 stat <- rbind(stat,c("ALL", total[1,1])) %>% arrange(desc(pctAnsweringFirst))
 showStatistic_2(stat)
@@ -248,5 +252,67 @@ stat <- dfItemsSelected[dfItemsSelected$Episode %in% dfEpisodeData[dfEpisodeData
 showStatistic_2(stat)
 ```
 
-## Some Visuals
-![](../plots/overall.PNG)
+## Visuals
+``` {r Plots, echo = FALSE}
+# Overall Performance
+stat1 <- dfPanelistPerf %>% group_by(Panelist) %>% summarise(Overall =  percent(sum(Correct)/n())) 
+total1 <- dfOverallPerf %>% summarise(Overall =  percent(sum(Correct)/n())) 
+stat1 <- rbind(stat1,c("ALL", total1[1,1])) %>% arrange(desc(Overall))
+
+#p1 <- ggplot(stat1, aes(x=reorder(Panelist, desc(Overall)), y=Overall)) + geom_bar(stat="identity", width=0.5) + ggtitle("Science or Fiction 2018 Results") + theme(text = element_text(size=20)) + ylab('% Wins Overall') + xlab('')
+
+panelistLevels = stat1$Panelist # Preserve order for second graph
+
+stat2 <- dfPanelistPerf %>% group_by(Panelist, Theme) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
+total2 <- dfOverallPerf %>% group_by(Theme) %>% summarise(pctThemes = percent(sum(Correct)/n())) %>% mutate(Panelist = 'ALL') %>% select(Panelist, Theme, pctThemes)
+stat2 <- as.data.frame(stat2)
+total2 <- as.data.frame(total2)
+stat2 <- rbind(stat2,total2) 
+
+
+stat2$Panelist = factor(stat2$Panelist, levels=panelistLevels)
+
+
+#p2 <- ggplot(stat2, aes(x=Panelist, y=pctThemes, fill=Theme)) + geom_bar(stat="identity", position = position_dodge(width=.75), color="grey40", width=0.75) + ggtitle("Science or Fiction 2018 Results") + theme(legend.position = c(.85,1), legend.justification = c(1,1), legend.background = element_blank(), text = element_text(size=20) ) + ylab('% Wins Themes / No Themes') + xlab('')
+
+
+
+
+summary1 <- stat1 %>% mutate(Result = "% Wins Overall") %>% select(Result, Panelist, Overall) 
+names(summary1) <- c("Result", "Panelist", "Pct")
+summary1_wide <- dcast(summary1, Result ~ Panelist) %>% select(c('Result', panelistLevels))
+
+summary2 <- stat2 
+summary2$Theme <- mapply(ifelse, test = (summary2$Theme == "With Theme"), yes = '% Wins With Themes', no = '% Wins Without Themes')
+summary2 <- summary2 %>% select(Theme, Panelist, pctThemes)
+names(summary2) <- c("Result", "Panelist", "Pct")
+summary2_wide <- dcast(summary2, Result ~ Panelist) %>% select(c('Result', panelistLevels))
+summary_final_wide <- rbind(summary1_wide, summary2_wide)
+
+#k <- kable(summary_final, format.args = list(justify='right', width=500) ,row.names=NA, digits=1, format='html', table.attr = "style='width:90%;'")
+
+#tt1 <- ttheme_default()
+t <- tableGrob(summary_final_wide, rows=NULL, theme = ttheme_default(core=list(fg_params=list(fontface=3L, fontsize=20), bg_params = list(fill = c("#FFFF00", "#E69F00", "#56B4E9"), col=NA)), colhead=list(fg_params=list(fontface=4L, fontsize=20))) )
+t$widths <- unit(rep(1/ncol(t), ncol(t)), "npc")
+
+summary_final <- rbind(summary1, summary2)
+summary_final$Panelist = factor(summary_final$Panelist, levels=panelistLevels)
+resultLevels = unique(summary_final$Result)
+summary_final$Result = factor(summary_final$Result, levels=resultLevels, ordered=TRUE)
+summary_final <- as.data.frame(summary_final) 
+
+p_final <- ggplot(summary_final, aes(x=Panelist, y=Pct)) + geom_bar(aes(fill=Result),stat="identity", position = position_dodge(width=.85), color="grey40", width=0.80) + ggtitle("Evan Leads Overall \n Cara Leads on Segments with Themes \n Evan Leads on Segments Without Themes") + 
+    theme(legend.position = c(.95,1), 
+          legend.justification = c(1,1), 
+          legend.key.size = unit(2, 'lines'), 
+          legend.background = element_blank(), 
+          text = element_text(size=25),
+          plot.title = element_text(hjust = 0.5)) + 
+    ylab('% Wins') + xlab('') + 
+    scale_fill_manual(values=c("#FFFF00", "#E69F00", "#56B4E9")) + 
+    geom_text(aes(group=Result, label=Pct), vjust=2, position = position_dodge(width=.85), size=6) +
+    guides(fill=guide_legend(title=""))
+
+lay <- rbind(c(1), c(1), c(1), c(2))
+grid.arrange(grobs=list(p_final, t), layout_matrix=lay)
+```
