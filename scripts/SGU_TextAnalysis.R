@@ -17,7 +17,7 @@
 # 8 Run some sanity checks for dupes
 
 SGUQuestionFile <- "SGU_SorF_QuestionText.csv"
-EpisodesWithoutSorF <- c(628, 642)
+EpisodesWithoutSorF <- c(628, 642, 693)
     
 # Append item of questions file
 appendQuestion <- function(questionfilename, episodeNumber, itemNumber, question_type, question_text) {
@@ -121,7 +121,7 @@ refreshQuestionFile <- function() {
         
         questions <- scrapeEpisodePage(episodeNumber)
         
-        if (episodeNumber > 610)  {break}
+        if (episodeNumber > 700)  {break}
     }
     checkQuestionFile()
 }
@@ -133,4 +133,19 @@ checkQuestionFile <- function() {
     print(dfCounts[dfCounts$itemCount > 4, ])
     print("Check for Episodes with Less than 3 Questions...")
     print(dfCounts[dfCounts$itemCount < 3, ])
+    compareFiction()
+}
+compareFiction <- function() {
+    print("Check for mismatch of Fiction Items with Episode Data...")
+    dfQuestions <- read.csv(SGUQuestionFile)
+    dfQuestions <- dfQuestions %>% filter(ScienceOrFiction == 'Fiction')
+    
+    pathtofile <- file.path(".",'SGU_Science_or_Fiction.xlsx')
+    dfEpisodeData <- readxl::read_excel(pathtofile, sheet = 1 )
+    dfEpisodeData <- as.data.frame(dfEpisodeData)
+    dfEpisodeData <- select(dfEpisodeData, 1,7)
+    
+    dfCompare <- merge(dfQuestions, dfEpisodeData, by.x = 'EpisodeNumber', by.y = 'Episode')
+    dfCompare <- dfCompare %>% filter(ItemNumber != FictionItem)
+    print(dfCompare)
 }
