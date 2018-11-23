@@ -101,21 +101,41 @@ readSGUSummary <- function() {
 }
 
 calcSGUSummary <- function() {
+    pathtofile <- file.path(".",'SGU_Science_or_Fiction.xlsx')
     Rogues <- c("Steve", "Bob", "Evan", "Cara", "Jay")
-    pathtofile <- file.path(getwd(),'SGU_Science_or_Fiction.xlsx')
+    Episode_range = 652:697
+    
     dfEpisodeData <- readxl::read_excel(pathtofile, sheet = 1 )
     dfEpisodeData <- as.data.frame(dfEpisodeData)
-    dfEpisodeData <- select(dfEpisodeData, 1:8)
+    dfEpisodeData <- select(dfEpisodeData, 1:8) %>% filter(Episode %in% Episode_range)
     
     
     dfItemsSelected <- readxl::read_excel(pathtofile, sheet =2)
     dfItemsSelected <- as.data.frame(dfItemsSelected)
     dfItemsSelected <- select(dfItemsSelected, c('Episode', 'Panelist', 'ItemSelected', 'AnsweringOrder'))
+    dfItemsSelected <- filter(dfItemsSelected, Episode %in% Episode_range)
     
-    #dfItemsSelected <- melt(dfEpisodeData, id.vars = 'Episode', measure.vars = 10:21, na.rm = TRUE, value.name = 'ItemSelected', variable.name = 'Panelist')
-    dfFictionItems <- select(dfEpisodeData, c('Episode', 'FictionItem'))
+    
+    dfFictionItems <- select(dfEpisodeData, c('Episode', 'FictionItem', 'Theme'))
     dfItemsSelected <- inner_join(dfItemsSelected, dfFictionItems, by='Episode')
     dfItemsSelected$Correct <- mapply(ifelse, test = (dfItemsSelected$ItemSelected == dfItemsSelected$FictionItem), yes = 1, no = 0 )
+    dfItemsSelected$Theme <- mapply(ifelse, test = !is.na(dfItemsSelected$Theme), yes = 'With Theme', no = 'Without Theme')
+    dfPanelistPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist, Theme) %>% filter(Panelist %in% Rogues) 
+    dfOverallPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist, Theme) # %>% filter(Panelist %in% Rogues)
+    
+    
+    dfDuoPerf <- inner_join(dfItemsSelected, dfItemsSelected, by='Episode')
+    View(dfDuoPerf)
+    dfDuo <- dfDuoPerf %>% filter(Panelist.x %in% Rogues) %>% filter(Panelist.y %in% Rogues) %>% group_by(Panelist.x, Panelist.y, ItemSelected.x == ItemSelected.y) %>% summarise('Percent Correct' = 100*sum(Correct.x)/n())
+   
+    dfDuo <-  rename(dfDuo, Rogue = Panelist.x) #, Peer == Panelist.y, Agree == 'ItemSelected.x == ItemSelected.y', 'Percent Correct' = pctCorrect) # names(dfDuo)<-c('Rogue', 'Peer', 'Agree', 'Percent Correct')
+    dfDuo <-  rename(dfDuo, Peer = Panelist.y)
+    dfDuo <-  rename(dfDuo, Agree = 'ItemSelected.x == ItemSelected.y')
+    View(dfDuo)
+    
+
+    dfDuoWide <- dfDuoWide %>% filter(Agree==FALSE) %>% dcast( Rogue ~ Peer , value.var ='Percent Correct')
+    View(dfDuoWide)
     
     # Append number correct for each episode
     dfCorrect <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% summarise(CorrectAnswers = sum(Correct)))
@@ -128,17 +148,6 @@ calcSGUSummary <- function() {
     # Append number of panelists for each episode
     dfTotalPanelists <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% summarise(TotalPanelists = n()) %>% select(Episode, TotalPanelists))
     dfEpisodeData <- inner_join(dfEpisodeData, dfTotalPanelists, by='Episode')
-    
-    # Solo Wins
-    dfSoloWins <- dfItemsSelected[dfItemsSelected$Episode %in% dfEpisodeData[dfEpisodeData$CorrectAnswers==1, 'Episode'] & dfItemsSelected$Correct==1, c('Episode', 'Panelist')]
-    dfSoloWins %>% group_by(Panelist) %>% summarise(SoloWins = n())
-    
-    # Host Sweeps
-    dfHostSweeps <- dfEpisodeData[dfEpisodeData$CorrectAnswers==0, c('Episode', 'Host')]
-    dfHostSweeps %>% group_by(Host) %>% summarize(HostSweeps = n())
-    
-    dfPanelistPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist) %>% group_by(Panelist)
-    #dfPanelistPerf <- as.data.frame(dfPanelistPerf)
     
     # Overall Performance
     print(dfPanelistPerf %>% summarise(pctAnsweringFirst = sum(Correct)/n()))
@@ -167,7 +176,6 @@ calcSGUSummary <- function() {
     dfConsecLosses <- t(as.data.frame(losses))
 
    #Panelist Sweeps
-    View(dfEpisodeData)
     print(dfEpisodeData[dfEpisodeData$CorrectAnswers == dfEpisodeData$TotalPanelists,"Episode"])
     print(dfItemsSelected[dfItemsSelected$Episode %in% dfEpisodeData[dfEpisodeData$CorrectAnswers == dfEpisodeData$TotalPanelists,"Episode"],])
 }  
