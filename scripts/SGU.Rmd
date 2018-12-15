@@ -223,7 +223,7 @@ grid.arrange(grobs=list(p_final, t), layout_matrix=lay)
 
 **NOTE: ALL includes contributions from Special Guest Rogues not listed**  
 Raw data and some visuals are located in [This Excel file](https://github.com/wayneheller/SGU_Science_or_Fiction/blob/master/SGU_Science_or_Fiction.xlsx) Click the Download button on this github page.  
-Last Year comparison is based on Episodes 601 - 652
+Last Year comparison is based on Episodes 601 - 651
 
 ``` {r winsOverall_debug, echo = FALSE, eval = debug_flag}
 Overall Win Percentage  
