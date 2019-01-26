@@ -1,7 +1,7 @@
 ---
 title: "SGU 2018 Science or Fiction Stats"
 author: "Wayne Heller"
-date: "December 15, 2018"
+date: "January 26, 2019"
 output: html_document
 ---
 
@@ -20,8 +20,8 @@ library(gridExtra)
 library(forcats)
 
 debug_flag = FALSE # See description below.  If TRUE, will show the summarization values from spreadsheet as a validation
-Episode_range = 652:701
-Episode_range_LY = 652:701
+Episode_range = 652:703
+Episode_range_LY = 652:703
 Current_Year = 2018
 Last_Year = 2017
 XL_SHEET_2017_SUMMARY = 4
@@ -37,12 +37,12 @@ At the end of the calendar year, Dr. Novella host a year in review episode where
 ## `r Current_Year` Summary - Episodes# `r Episode_range[1]` - `r tail(Episode_range,1)`
 
 * Evan led this year with the highest overall win percentage, followed by Jay 
-* The Rogues performed better overall this year compared to last 62.7% to 55.6%
+* The Rogues performed better overall this year compared to last 60.7% to 55.6%
 * Cara is the only rogue that performs better on segments with themes than without. 
 * Evan has the most solo wins, followed by Cara and Jay.
 * The panel performs better overall when Cara answers first 
 * Relative to other panelists, Bob does well when he is the first to answer.  Performance for all rogues answering first dramatically improved this year compared to last year.
-* There were 12 panelist sweeps (compared to 7 in 2017) and 3 hosts sweeps, 1 by Bob and 2 by Steve (Steve had 5 host sweeps last year and Evan had 1).    
+* There were 12 panelist sweeps (compared to 7 in 2017) and 4 hosts sweeps, 1 by Bob, 1 by Jay and 2 by Steve (Steve had 5 host sweeps last year and Evan had 1).    
 
 ## `r Current_Year` Summary Statistics 
  
