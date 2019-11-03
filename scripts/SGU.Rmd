@@ -1,7 +1,7 @@
 ---
 title: "SGU 2019 Science or Fiction Stats"
 author: "Wayne Heller"
-date: "January 26, 2019"
+date: "November 3, 2019"
 output: html_document
 ---
 
@@ -20,7 +20,7 @@ library(gridExtra)
 library(forcats)
 
 debug_flag = FALSE # See description below.  If TRUE, will show the summarization values from spreadsheet as a validation
-Episode_range = 704:732
+Episode_range = 704:747
 Episode_range_LY = 652:703
 Current_Year = 2019
 Last_Year = 2018
@@ -69,13 +69,11 @@ dfEpisodeData <- readxl::read_excel(pathtofile, sheet = 1 )
 dfEpisodeData <- as.data.frame(dfEpisodeData)
 dfEpisodeData <- select(dfEpisodeData, c(1,2,7,8)) %>% filter(Episode %in% Episode_range)
     
-    
 dfItemsSelected <- readxl::read_excel(pathtofile, sheet =2)
 dfItemsSelected <- as.data.frame(dfItemsSelected)
 dfItemsSelected <- select(dfItemsSelected, c('Episode', 'Panelist', 'ItemSelected', 'AnsweringOrder'))
 dfItemsSelected <- filter(dfItemsSelected, Episode %in% Episode_range)
     
-
 dfFictionItems <- select(dfEpisodeData, c('Episode', 'FictionItem', 'Theme'))
 
 dfItemsSelected <- inner_join(dfItemsSelected, dfFictionItems, by='Episode')
@@ -85,8 +83,6 @@ dfItemsSelected$Theme <- mapply(ifelse, test = !is.na(dfItemsSelected$Theme), ye
 dfPanelistPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist, Theme) %>% filter(Panelist %in% Rogues) 
 
 dfOverallPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist, Theme) # %>% filter(Panelist %in% Rogues)
-
-
 
 # Append number correct for each episode
 dfCorrect <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% summarise(CorrectAnswers = sum(Correct)))
@@ -344,7 +340,7 @@ summary_final <- as.data.frame(summary_final)
 
 # should make the titles dynamic
 p_final <- ggplot(summary_final, aes(x=Panelist, y=Statistic)) + geom_bar(aes(fill=Result),stat="identity", position = position_dodge(width=.85), color="grey40", width=0.80) + ggtitle("Evan Leads Overall \n Cara Leads on Segments with Themes \n Evan Leads on Segments Without Themes") + 
-     scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+     # scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
      theme(legend.position = c(.95,1.03), 
            legend.justification = c(1,1), 
            legend.key.size = unit(2, 'lines'), 
@@ -353,7 +349,7 @@ p_final <- ggplot(summary_final, aes(x=Panelist, y=Statistic)) + geom_bar(aes(fi
            plot.title = element_text(hjust = 0.5)) + 
      ylab('% Wins') + xlab('') + 
      scale_fill_manual(values=c("#FFFF00", "#E69F00", "#56B4E9")) + 
-     geom_text(aes(group=Result, label=percent(Statistic,.1)), vjust=2, position = position_dodge(width=.85), size=6) +
+     geom_text(aes(group=Result, label=round(Statistic,2)), vjust=2, position = position_dodge(width=.85), size=6) +
      guides(fill=guide_legend(title=""))
 
 lay <- rbind(c(1), c(1), c(1), c(2))
@@ -366,7 +362,7 @@ grid.arrange(grobs=list(p_final, t), layout_matrix=lay)
 
 **NOTE: ALL includes contributions from Special Guest Rogues not listed**  
 Raw data and some visuals are located in [This Excel file](https://github.com/wayneheller/SGU_Science_or_Fiction/blob/master/SGU_Science_or_Fiction.xlsx) Click the Download button on this github page.  
-Last Year comparison is based on Episodes 601 - 651
+Last Year comparison is based on Episodes 652 - 703
 
 ``` {r winsOverall_debug, echo = FALSE, eval = debug_flag}
 Overall Win Percentage  
@@ -376,27 +372,33 @@ showStatistic('% Wins Overall')
 ### Overall Performance
 ``` {r winsOverall_, echo = FALSE}
 # Much of this code will need to be rewrite for 2019 to pull from the same set of data
-
+#  -- This Year Overall ---
 statTY <- dfPanelistPerf %>% group_by(Panelist) %>% summarise(Overall =  percent(sum(Correct)/n())) 
 
 totalTY <- dfOverallPerf %>% summarise(Overall =  percent(sum(Correct)/n())) 
 
 statTY <- rbind(statTY,c("ALL", totalTY[1,1])) %>% arrange(desc(Overall))
 
+# --- Last Year Overall ---
+statLY <- dfPanelistPerf_LY %>% group_by(Panelist) %>% summarise(Overall =  percent(sum(Correct)/n())) 
+
+totalLY <- dfOverallPerf_LY %>% summarise(Overall =  percent(sum(Correct)/n())) 
+
+statLY <- rbind(statLY,c("ALL", totalLY[1,1])) %>% arrange(desc(Overall))
 
 
 # All of this code is to pull from the Excel Summary for 2017
-statName <- '% Wins Overall'
-statLY <- dfSGUSummary[, statName]
-statLY <- na.exclude(statLY)
-statLY2 <- sprintf("%.1f%%", statLY*100)
-names(statLY2) <- names(statLY)
-dfstatLY2 <- as.data.frame(statLY2)
-dfstatLY2<- cbind(Panelist = rownames(dfstatLY2), dfstatLY2)
-rownames(dfstatLY2) <- NULL
+# statName <- '% Wins Overall'
+# statLY <- dfSGUSummary[, statName]
+# statLY <- na.exclude(statLY)
+# statLY2 <- sprintf("%.1f%%", statLY*100)
+# names(statLY2) <- names(statLY)
+# dfstatLY2 <- as.data.frame(statLY2)
+# dfstatLY2<- cbind(Panelist = rownames(dfstatLY2), dfstatLY2)
+# rownames(dfstatLY2) <- NULL
 
 
-statYoY <- merge(statTY, dfstatLY2, by = 'Panelist') 
+statYoY <- merge(statTY, statLY, by = 'Panelist') 
 
 names(statYoY) <- c('Panelist', Current_Year, Last_Year)
 
@@ -412,22 +414,28 @@ showStatistic('% Wins with Themes')
 ```
 
 ``` {r winsThemes, echo = FALSE}
+# --- Wins with Themes This Year --
 statTY <- dfPanelistPerf %>% group_by(Panelist) %>% filter(Episode %in% dfEpisodeData[!is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
 totalTY <- dfOverallPerf %>% filter(Episode %in% dfEpisodeData[!is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
 statTY <- rbind(statTY,c("ALL", totalTY[1,1])) %>% arrange(desc(pctThemes))
 
+# --- Wins with Themes Last Year --
+statLY <- dfPanelistPerf_LY %>% group_by(Panelist) %>% filter(Episode %in% dfEpisodeData_LY[!is.na(dfEpisodeData_LY$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
+totalLY <- dfOverallPerf_LY %>% filter(Episode %in% dfEpisodeData_LY[!is.na(dfEpisodeData_LY$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
+statLY <- rbind(statLY,c("ALL", totalLY[1,1])) %>% arrange(desc(pctThemes))
+
 # All of this code is to pull from the Excel Summary for 2017
-statName <- '% Wins with Themes'
-statLY <- dfSGUSummary[, statName]
-statLY <- na.exclude(statLY)
-statLY2 <- sprintf("%.1f%%", statLY*100)
-names(statLY2) <- names(statLY)
-dfstatLY2 <- as.data.frame(statLY2)
-dfstatLY2<- cbind(Panelist = rownames(dfstatLY2), dfstatLY2)
-rownames(dfstatLY2) <- NULL
+# statName <- '% Wins with Themes'
+# statLY <- dfSGUSummary[, statName]
+# statLY <- na.exclude(statLY)
+# statLY2 <- sprintf("%.1f%%", statLY*100)
+# names(statLY2) <- names(statLY)
+# dfstatLY2 <- as.data.frame(statLY2)
+# dfstatLY2<- cbind(Panelist = rownames(dfstatLY2), dfstatLY2)
+# rownames(dfstatLY2) <- NULL
 
 
-statYoY <- merge(statTY, dfstatLY2, by = 'Panelist') 
+statYoY <- merge(statTY, statLY, by = 'Panelist') 
 
 names(statYoY) <- c('Panelist', Current_Year, Last_Year)
 
@@ -443,24 +451,29 @@ showStatistic('% Wins without Themes')
 ```
 
 ``` {r winswithoutThemes, echo = FALSE}
+# --- Wins without Themes This Year ---
 statTY <- dfPanelistPerf %>% group_by(Panelist) %>% filter(Episode %in% dfEpisodeData[is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n()))
 totalTY <- dfOverallPerf %>% filter(Episode %in% dfEpisodeData[is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
 statTY <- rbind(statTY,c("ALL", totalTY[1,1])) %>% arrange(desc(pctThemes))
 
+# --- Wins without Themes Last Year ---
+statLY <- dfPanelistPerf_LY %>% group_by(Panelist) %>% filter(Episode %in% dfEpisodeData_LY[is.na(dfEpisodeData_LY$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n()))
+totalLY <- dfOverallPerf_LY %>% filter(Episode %in% dfEpisodeData_LY[is.na(dfEpisodeData_LY$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
+statLY <- rbind(statLY,c("ALL", totalLY[1,1])) %>% arrange(desc(pctThemes))
+
 
 # All of this code is to pull from the Excel Summary for 2017
-statName <- '% Wins without Themes'
-statLY <- dfSGUSummary[, statName]
-statLY <- na.exclude(statLY)
-statLY2 <- sprintf("%.1f%%", statLY*100)
-names(statLY2) <- names(statLY)
-dfstatLY2 <- as.data.frame(statLY2)
-dfstatLY2<- cbind(Panelist = rownames(dfstatLY2), dfstatLY2)
-rownames(dfstatLY2) <- NULL
+# statName <- '% Wins without Themes'
+# statLY <- dfSGUSummary[, statName]
+# statLY <- na.exclude(statLY)
+# statLY2 <- sprintf("%.1f%%", statLY*100)
+# names(statLY2) <- names(statLY)
+# dfstatLY2 <- as.data.frame(statLY2)
+# dfstatLY2<- cbind(Panelist = rownames(dfstatLY2), dfstatLY2)
+# rownames(dfstatLY2) <- NULL
 
 
-statYoY <- merge(statTY, dfstatLY2, by = 'Panelist') 
-
+statYoY <- merge(statTY, statLY, by = 'Panelist') 
 names(statYoY) <- c('Panelist', Current_Year, Last_Year)
 
 kable(statYoY, format.args = list(justify='right', width=500) , rownames=TRUE,  digits=1, align = c('l', 'c', 'c'), format='html', table.attr = "style='width:25%;'")
@@ -521,25 +534,29 @@ showStatistic('Panel Performance When Answering First')
 ```
 ``` {r PanelPerformance, echo = FALSE}
 statTY <- dfEpisodeData %>% filter(FirstPanelist %in% Rogues) %>% group_by(FirstPanelist) %>% summarise(PanelPerformance = percent(sum(CorrectAnswers)/sum(TotalPanelists))) %>% arrange(desc(PanelPerformance))
+
+statLY <- dfEpisodeData_LY %>% filter(FirstPanelist %in% Rogues) %>% group_by(FirstPanelist) %>% summarise(PanelPerformance = percent(sum(CorrectAnswers)/sum(TotalPanelists))) %>% arrange(desc(PanelPerformance))
+names(statTY) <- c('Panelist', 'PanelPerformance')
+
 #showStatistic_2(statTY)
 
 # All of this code is to pull from the Excel Summary for 2017
-statName <- 'Panel Performance When Answering First'
-statLY <- dfSGUSummary[, statName]
-statLY <- na.exclude(statLY)
-statLY2 <- sprintf("%.1f%%", statLY*100)
-names(statLY2) <- names(statLY)
-dfstatLY2 <- as.data.frame(statLY2)
-dfstatLY2<- cbind(Panelist = rownames(dfstatLY2), dfstatLY2)
-rownames(dfstatLY2) <- NULL
+# statName <- 'Panel Performance When Answering First'
+# statLY <- dfSGUSummary[, statName]
+# statLY <- na.exclude(statLY)
+# statLY2 <- sprintf("%.1f%%", statLY*100)
+# names(statLY2) <- names(statLY)
+# dfstatLY2 <- as.data.frame(statLY2)
+# dfstatLY2<- cbind(Panelist = rownames(dfstatLY2), dfstatLY2)
+# rownames(dfstatLY2) <- NULL
 #showStatistic_2(statLY2)
 
-names(statTY) <- c('Panelist', 'PanelPerformance')
-statYoY <- merge(statTY, dfstatLY2, by = 'Panelist') 
+names(statLY) <- c('Panelist', 'PanelPerformance')
+statYoY <- merge(statTY, statLY, by = 'Panelist') 
 
 names(statYoY) <- c('Panelist', Current_Year, Last_Year)
 
-statYoY <- statYoY %>% arrange(desc(`2018`))
+statYoY <- statYoY %>% arrange(desc(`2019`))
 kable(statYoY, format.args = list(justify='right', width=500) , rownames=TRUE,  digits=1, align = c('l', 'c', 'c'), format='html', table.attr = "style='width:25%;'")
 ```
 
@@ -552,25 +569,27 @@ showStatistic('Panelist Performance When Answering First')
 stat <- dfPanelistPerf %>% group_by(Panelist) %>% filter(AnsweringOrder==1) %>% summarise(pctAnsweringFirst = percent(sum(Correct)/n())) %>% arrange(desc(pctAnsweringFirst))
 total <- dfOverallPerf %>% filter(AnsweringOrder==1) %>% summarise(pctAnsweringFirst = percent(sum(Correct)/n())) %>% arrange(desc(pctAnsweringFirst))
 statTY <- rbind(stat,c("ALL", total[1,1])) %>% arrange(desc(pctAnsweringFirst))
+names(statTY) <- c('Panelist', 'PanelPerformance')
+
+stat <- dfPanelistPerf_LY %>% group_by(Panelist) %>% filter(AnsweringOrder==1) %>% summarise(pctAnsweringFirst = percent(sum(Correct)/n())) %>% arrange(desc(pctAnsweringFirst))
+total <- dfOverallPerf_LY %>% filter(AnsweringOrder==1) %>% summarise(pctAnsweringFirst = percent(sum(Correct)/n())) %>% arrange(desc(pctAnsweringFirst))
+statLY <- rbind(stat,c("ALL", total[1,1])) %>% arrange(desc(pctAnsweringFirst))
+names(statLY) <- c('Panelist', 'PanelPerformance')
 #showStatistic_2(statTY)
 
 # All of this code is to pull from the Excel Summary for 2017
-statName <- 'Panelist Performance When Answering First'
-statLY <- dfSGUSummary[, statName]
-statLY <- na.exclude(statLY)
-statLY2 <- sprintf("%.1f%%", statLY*100)
-names(statLY2) <- names(statLY)
-dfstatLY2 <- as.data.frame(statLY2)
-dfstatLY2<- cbind(Panelist = rownames(dfstatLY2), dfstatLY2)
-rownames(dfstatLY2) <- NULL
+#statName <- 'Panelist Performance When Answering First'
+#statLY <- dfSGUSummary[, statName]
+#statLY <- na.exclude(statLY)
+#statLY2 <- sprintf("%.1f%%", statLY*100)
+#names(statLY2) <- names(statLY)
+#dfstatLY2 <- as.data.frame(statLY2)
+#dfstatLY2<- cbind(Panelist = rownames(dfstatLY2), dfstatLY2)
+#rownames(dfstatLY2) <- NULL
 #showStatistic_2(statLY2)
-
-names(statTY) <- c('Panelist', 'PanelPerformance')
-statYoY <- merge(statTY, dfstatLY2, by = 'Panelist') 
-
+statYoY <- merge(statTY, statLY, by = 'Panelist') 
 names(statYoY) <- c('Panelist', Current_Year, Last_Year)
-
-statYoY <- statYoY %>% arrange(desc(`2018`))
+statYoY <- statYoY %>% arrange(desc(`2019`))
 kable(statYoY, format.args = list(justify='right', width=500) , rownames=TRUE,  digits=1, align = c('l', 'c', 'c'), format='html', table.attr = "style='width:25%;'")
 ```
 
@@ -585,27 +604,31 @@ stat <- dfHostSweeps %>% group_by(Host) %>% summarize(HostSweeps = n()) %>% arra
 total <- dfHostSweeps %>% summarize(HostSweeps = n())
 statTY <- rbind(stat,c("ALL", total[1,1])) 
 #showStatistic_2(statTY)
-
+dfHostSweeps <- dfEpisodeData_LY[dfEpisodeData_LY$CorrectAnswers==0, c('Episode', 'Host')]
+stat <- dfHostSweeps %>% group_by(Host) %>% summarize(HostSweeps = n()) %>% arrange(desc(HostSweeps))
+total <- dfHostSweeps %>% summarize(HostSweeps = n())
+statLY <- rbind(stat,c("ALL", total[1,1])) 
 # All of this code is to pull from the Excel Summary for 2017
-statName <- 'Host Sweeps'
-statLY <- dfSGUSummary[, statName]
-statLY2 <- na.exclude(statLY)
+#statName <- 'Host Sweeps'
+#statLY <- dfSGUSummary[, statName]
+#statLY2 <- na.exclude(statLY)
 #statLY2 <- sprintf("%.1f%%", statLY*100)
-names(statLY2) <- names(statLY)
-dfstatLY2 <- as.data.frame(statLY2)
-dfstatLY2<- cbind(Panelist = rownames(dfstatLY2), dfstatLY2)
+#names(statLY2) <- names(statLY)
+#dfstatLY2 <- as.data.frame(statLY2)
+#dfstatLY2<- cbind(Panelist = rownames(dfstatLY2), dfstatLY2)
 #print(dfstatLY2)
-dfstatLY2 <- dfstatLY2 %>% filter(statLY2 > 0)
-rownames(dfstatLY2) <- NULL
+#dfstatLY2 <- dfstatLY2 %>% filter(statLY2 > 0)
+#rownames(dfstatLY2) <- NULL
 
 #showStatistic_2(statLY2)
 
 names(statTY) <- c('Panelist', 'PanelPerformance')
-statYoY <- merge(statTY, dfstatLY2, by = 'Panelist', all = TRUE) 
+names(statLY) <- c('Panelist', 'PanelPerformance')
+statYoY <- merge(statTY, statLY, by = 'Panelist', all = TRUE) 
 
 names(statYoY) <- c('Host', Current_Year, Last_Year)
 
-statYoY <- statYoY %>% arrange(desc(`2018`))
+statYoY <- statYoY %>% arrange(desc(`2019`))
 kable(statYoY, format.args = list(justify='right', width=500) , rownames=TRUE,  digits=1, align = c('l', 'c', 'c'), format='html', table.attr = "style='width:25%;'")
 ```
 
@@ -618,24 +641,26 @@ showStatistic('Panelist Sweeps', ispercentage = FALSE)
 ``` {r PanelSweeps, echo = FALSE}
 statTY <- dfItemsSelected[dfItemsSelected$Episode %in% dfEpisodeData[dfEpisodeData$CorrectAnswers == dfEpisodeData$TotalPanelists,"Episode"],] %>% group_by(Panelist) %>% summarise(PanelistSweeps = n()) %>% filter(Panelist %in% Rogues) %>% arrange(desc(PanelistSweeps))
 #showStatistic_2(statTY)
+statLY <- dfItemsSelected_LY[dfItemsSelected_LY$Episode %in% dfEpisodeData_LY[dfEpisodeData_LY$CorrectAnswers == dfEpisodeData_LY$TotalPanelists,"Episode"],] %>% group_by(Panelist) %>% summarise(PanelistSweeps = n()) %>% filter(Panelist %in% Rogues) %>% arrange(desc(PanelistSweeps))
 
 # All of this code is to pull from the Excel Summary for 2017
-statName <- 'Panelist Sweeps'
-statLY <- dfSGUSummary[, statName]
-statLY2 <- na.exclude(statLY)
+#statName <- 'Panelist Sweeps'
+#statLY <- dfSGUSummary[, statName]
+#statLY2 <- na.exclude(statLY)
 #statLY2 <- sprintf("%.1f%%", statLY*100)
-names(statLY2) <- names(statLY)
-dfstatLY2 <- as.data.frame(statLY2)
-dfstatLY2<- cbind(Panelist = rownames(dfstatLY2), dfstatLY2)
-rownames(dfstatLY2) <- NULL
+#names(statLY2) <- names(statLY)
+#dfstatLY2 <- as.data.frame(statLY2)
+#dfstatLY2<- cbind(Panelist = rownames(dfstatLY2), dfstatLY2)
+#rownames(dfstatLY2) <- NULL
 #showStatistic_2(statLY2)
 
 names(statTY) <- c('Panelist', 'PanelPerformance')
-statYoY <- merge(statTY, dfstatLY2, by = 'Panelist') 
+names(statLY) <- c('Panelist', 'PanelPerformance')
+statYoY <- merge(statTY, statLY, by = 'Panelist') 
 
 names(statYoY) <- c('Panelist', Current_Year, Last_Year)
 
-statYoY <- statYoY %>% arrange(desc(`2018`))
+statYoY <- statYoY %>% arrange(desc(`2019`))
 kable(statYoY, format.args = list(justify='right', width=500) , rownames=TRUE,  digits=1, align = c('l', 'c', 'c'), format='html', table.attr = "style='width:25%;'")
 ```
 
