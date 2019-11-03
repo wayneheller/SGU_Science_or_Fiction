@@ -1,5 +1,5 @@
 ---
-title: "SGU 2018 Science or Fiction Stats"
+title: "SGU 2019 Science or Fiction Stats"
 author: "Wayne Heller"
 date: "January 26, 2019"
 output: html_document
@@ -20,12 +20,13 @@ library(gridExtra)
 library(forcats)
 
 debug_flag = FALSE # See description below.  If TRUE, will show the summarization values from spreadsheet as a validation
-Episode_range = 652:703
+Episode_range = 704:732
 Episode_range_LY = 652:703
-Current_Year = 2018
-Last_Year = 2017
+Current_Year = 2019
+Last_Year = 2018
 XL_SHEET_2017_SUMMARY = 4
 XL_SHEET_2018_SUMMARY = 5
+XL_SHEET_2019_SUMMARY = 6
 ```
 
 ## Background
@@ -36,13 +37,7 @@ At the end of the calendar year, Dr. Novella host a year in review episode where
 
 ## `r Current_Year` Summary - Episodes# `r Episode_range[1]` - `r tail(Episode_range,1)`
 
-* Evan led this year with the highest overall win percentage, followed by Jay 
-* The Rogues performed better overall this year compared to last 60.7% to 55.6%
-* Cara is the only rogue that performs better on segments with themes than without. 
-* Evan has the most solo wins, followed by Cara and Jay.
-* The panel performs better overall when Cara answers first 
-* Relative to other panelists, Bob does well when he is the first to answer.  Performance for all rogues answering first dramatically improved this year compared to last year.
-* There were 12 panelist sweeps (compared to 7 in 2017) and 4 hosts sweeps, 1 by Bob, 1 by Jay and 2 by Steve (Steve had 5 host sweeps last year and Evan had 1).    
+* TBD    
 
 ## `r Current_Year` Summary Statistics 
  
@@ -52,27 +47,27 @@ At the end of the calendar year, Dr. Novella host a year in review episode where
 # in Excel and present it on an HTML page published to RPubs.com.  In the next version, the Excel file was modified to put the
 # panelist answers on a separate tab in tidy format.  The revised markdown reads the data and does the summarization.  Since
 # both versions exist in the same Excel file, this code is able to create a markdown file that shows both, the summary from Excel
-# and the calculated summarizations.  Setting the debug_flag to TRUE enables both versions to be shown
+# and the calculated summarizations.  
 
 pathtofile <- file.path("..",'SGU_Science_or_Fiction.xlsx')
 Rogues <- c("Steve", "Bob", "Evan", "Cara", "Jay")
 
 
 
-if (TRUE) {
-    dfSGUSummary <- readxl::read_excel(pathtofile, sheet = XL_SHEET_2017_SUMMARY )
-    dfSGUSummary <- as.data.frame(dfSGUSummary)
-    rownames(dfSGUSummary) <- dfSGUSummary$Statistic
-    dfSGUSummary <- select(dfSGUSummary, -Statistic)
-    
-    dfSGUSummary <- select(dfSGUSummary, c(Rogues, "ALL"))
-    dfSGUSummary <- t(dfSGUSummary)
-}
+# Creates a dataframe from the Summary Results tab of the Excel file
+# Can be used as a validation to check calculations and to pull out summaries from 2017 when the data collection approach was different.  Did not begin using Answers tab until 2018
+dfSGUSummary <- readxl::read_excel(pathtofile, sheet = XL_SHEET_2019_SUMMARY )
+dfSGUSummary <- as.data.frame(dfSGUSummary)
+rownames(dfSGUSummary) <- dfSGUSummary$Statistic
+dfSGUSummary <- select(dfSGUSummary, -Statistic)
+dfSGUSummary <- select(dfSGUSummary, c(Rogues, "ALL"))
+dfSGUSummary <- t(dfSGUSummary)
+
 
 # Current Year dataframes
 dfEpisodeData <- readxl::read_excel(pathtofile, sheet = 1 )
 dfEpisodeData <- as.data.frame(dfEpisodeData)
-dfEpisodeData <- select(dfEpisodeData, 1:8) %>% filter(Episode %in% Episode_range)
+dfEpisodeData <- select(dfEpisodeData, c(1,2,7,8)) %>% filter(Episode %in% Episode_range)
     
     
 dfItemsSelected <- readxl::read_excel(pathtofile, sheet =2)
@@ -82,11 +77,16 @@ dfItemsSelected <- filter(dfItemsSelected, Episode %in% Episode_range)
     
 
 dfFictionItems <- select(dfEpisodeData, c('Episode', 'FictionItem', 'Theme'))
+
 dfItemsSelected <- inner_join(dfItemsSelected, dfFictionItems, by='Episode')
 dfItemsSelected$Correct <- mapply(ifelse, test = (dfItemsSelected$ItemSelected == dfItemsSelected$FictionItem), yes = 1, no = 0 )
 dfItemsSelected$Theme <- mapply(ifelse, test = !is.na(dfItemsSelected$Theme), yes = 'With Theme', no = 'Without Theme')
+
 dfPanelistPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist, Theme) %>% filter(Panelist %in% Rogues) 
+
 dfOverallPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist, Theme) # %>% filter(Panelist %in% Rogues)
+
+
 
 # Append number correct for each episode
 dfCorrect <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% summarise(CorrectAnswers = sum(Correct)))
@@ -99,6 +99,62 @@ dfEpisodeData <- inner_join(dfEpisodeData, dfFirstPanelist, by='Episode')
 # Append number of panelists for each episode
 dfTotalPanelists <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% summarise(TotalPanelists = n()) %>% select(Episode, TotalPanelists))
 dfEpisodeData <- inner_join(dfEpisodeData, dfTotalPanelists, by='Episode')
+
+
+# names(dfEpisodeData)
+## [1] "Episode"        "Theme"          "FictionItem"    "Host"          
+## [5] "CorrectAnswers" "FirstPanelist"  "TotalPanelists"
+
+#head(dfEpisodeData, 2)
+##   Episode      Theme FictionItem  Host CorrectAnswers FirstPanelist
+## 1     704 Extinction           3 Steve              3          Evan
+## 2     705       <NA>           2 Steve              3           Jay
+##   TotalPanelists
+## 1              4
+## 2              4
+
+#names(dfItemsSelected)
+## [1] "Episode"        "Panelist"       "ItemSelected"   "AnsweringOrder"
+## [5] "FictionItem"    "Theme"          "Correct"
+
+#head(dfItemsSelected, 5)
+##Episode Panelist ItemSelected AnsweringOrder FictionItem         Theme
+## 1     704     Evan            1              1           3    With Theme
+## 2     704      Bob            3              2           3    With Theme
+## 3     704     Cara            3              3           3    With Theme
+## 4     704      Jay            3              4           3    With Theme
+## 5     705      Jay            3              1           2 Without Theme
+##   Correct
+## 1       0
+## 2       1
+## 3       1
+## 4       1
+## 5       0
+
+#names(dfPanelistPerf)
+## [1] "Episode"        "AnsweringOrder" "Correct"        "Panelist"      
+## [5] "Theme"
+
+#head(dfPanelistPerf, 5)
+##   Episode AnsweringOrder Correct Panelist         Theme
+## 1     704              1       0     Evan    With Theme
+## 2     704              2       1      Bob    With Theme
+## 3     704              3       1     Cara    With Theme
+## 4     704              4       1      Jay    With Theme
+## 5     705              1       0      Jay Without Theme
+
+#names(dfOverallPerf)
+## [1] "Episode"        "AnsweringOrder" "Correct"        "Panelist"      
+## [5] "Theme"
+
+#head(dfOverallPerf, 5) - includes Rogues and Other Guest Panelists
+##   Episode AnsweringOrder Correct Panelist         Theme
+## 1     704              1       0     Evan    With Theme
+## 2     704              2       1      Bob    With Theme
+## 3     704              3       1     Cara    With Theme
+## 4     704              4       1      Jay    With Theme
+## 5     705              1       0      Jay Without Theme
+
 
 # Prior Year dataframes
 dfEpisodeData_LY <- readxl::read_excel(pathtofile, sheet = 1 )
@@ -157,68 +213,155 @@ showStatistic_2 <- function(lstResults, ispercentage = TRUE) {
 
 
 
-``` {r Plots, echo = FALSE}
+``` {r Plots_dataprep1, echo = FALSE}
 # Overall Performance
-stat1 <- dfPanelistPerf %>% group_by(Panelist) %>% summarise(Overall =  percent(sum(Correct)/n())) 
-total1 <- dfOverallPerf %>% summarise(Overall =  percent(sum(Correct)/n())) 
-stat1 <- rbind(stat1,c("ALL", total1[1,1])) %>% arrange(desc(Overall))
+winsOverallByPanelist <- dfPanelistPerf %>% group_by(Panelist) %>% summarise(Overall =  sum(Correct)/n(), CorrectGuesses = sum(Correct), TotalGuesses=n())
+winsOverallByPanelist <- as.data.frame(winsOverallByPanelist)
 
-#p1 <- ggplot(stat1, aes(x=reorder(Panelist, desc(Overall)), y=Overall)) + geom_bar(stat="identity", width=0.5) + ggtitle("Science or Fiction 2018 Results") + theme(text = element_text(size=20)) + ylab('% Wins Overall') + xlab('')
-
-panelistLevels = stat1$Panelist # Preserve order for second graph
-
-stat2 <- dfPanelistPerf %>% group_by(Panelist, Theme) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
-total2 <- dfOverallPerf %>% group_by(Theme) %>% summarise(pctThemes = percent(sum(Correct)/n())) %>% mutate(Panelist = 'ALL') %>% select(Panelist, Theme, pctThemes)
-stat2 <- as.data.frame(stat2)
-total2 <- as.data.frame(total2)
-stat2 <- rbind(stat2,total2) 
+winsOverallTotal <- dfOverallPerf %>% summarise(Overall =  sum(Correct)/n(), CorrectGuesses = sum(Correct), TotalGuesses=n())
 
 
-stat2$Panelist = factor(stat2$Panelist, levels=panelistLevels)
+winsOverallTotal$Panelist ='ALL'
+winsOverallTotal <- winsOverallTotal %>% select(Panelist, Overall, CorrectGuesses, TotalGuesses)
 
 
-#p2 <- ggplot(stat2, aes(x=Panelist, y=pctThemes, fill=Theme)) + geom_bar(stat="identity", position = position_dodge(width=.75), color="grey40", width=0.75) + ggtitle("Science or Fiction 2018 Results") + theme(legend.position = c(.85,1), legend.justification = c(1,1), legend.background = element_blank(), text = element_text(size=20) ) + ylab('% Wins Themes / No Themes') + xlab('')
+winsOverall <- rbind(winsOverallByPanelist, winsOverallTotal) %>% arrange(desc(Overall))
+
+
+#winsOverall$Overall <- percent(as.numeric(winsOverall$Overall),.1)
+
+panelistLevels = winsOverall$Panelist # Preserve order for second graph
+```
+``` {r Plots_dataprep2, echo = FALSE}
+winsByTheme <- dfPanelistPerf %>% group_by(Panelist, Theme) %>% summarise(pctThemes = sum(Correct)/n(), CorrectGuesses = sum(Correct), TotalGuesses=n())
 
 
 
+winsByThemeTotal <- dfOverallPerf %>% group_by(Theme) %>% summarise(pctThemes = sum(Correct)/n(), CorrectGuesses = sum(Correct), TotalGuesses=n()) %>% mutate(Panelist = 'ALL') %>% select(Panelist, Theme, pctThemes, CorrectGuesses, TotalGuesses)
 
-summary1 <- stat1 %>% mutate(Result = "% Wins Overall") %>% select(Result, Panelist, Overall) 
-names(summary1) <- c("Result", "Panelist", "Pct")
+
+winsByTheme <- as.data.frame(winsByTheme)
+winsByThemeTotal <- as.data.frame(winsByThemeTotal)
+
+winsByTheme <- rbind(winsByTheme,winsByThemeTotal) 
+
+#winsByTheme$pctThemes <- percent(as.numeric(winsByTheme$pctThemes),.1)
+
+winsByTheme$Panelist = factor(winsByTheme$Panelist, levels=panelistLevels)
+
+```
+``` {r Plots_dataprep_summary1, echo = FALSE}
+# Create summary table row for Percent Wins Overall
+summary1 <- winsOverall %>% mutate(Result = "% Wins Overall") %>% select(Result, Panelist, Overall) 
+names(summary1) <- c("Result", "Panelist", "Statistic")
+summary1["Statistic"] <- summary1["Statistic"] * 100
 summary1_wide <- dcast(summary1, Result ~ Panelist) %>% select(c('Result', panelistLevels))
 
-summary2 <- stat2 
+summary1a <- winsOverall %>% mutate(Result = "Correct Guesses Overall") %>% select(Result, Panelist, CorrectGuesses) 
+names(summary1a) <- c("Result", "Panelist", "Statistic")
+summary1a_wide <- dcast(summary1a, Result ~ Panelist) %>% select(c('Result', panelistLevels))
+
+summary1b <- winsOverall %>% mutate(Result = "Total Guesses Overall") %>% select(Result, Panelist, TotalGuesses) 
+names(summary1b) <- c("Result", "Panelist", "Statistic")
+summary1b_wide <- dcast(summary1b, Result ~ Panelist) %>% select(c('Result', panelistLevels))
+```
+``` {r Plots_dataprep_summary2, echo = FALSE}
+summary2 <- winsByTheme %>% filter(Theme == "With Theme")
 summary2$Theme <- mapply(ifelse, test = (summary2$Theme == "With Theme"), yes = '% Wins With Themes', no = '% Wins Without Themes')
 summary2 <- summary2 %>% select(Theme, Panelist, pctThemes)
-names(summary2) <- c("Result", "Panelist", "Pct")
+names(summary2) <- c("Result", "Panelist", "Statistic")
+summary2["Statistic"] <- summary2["Statistic"] * 100
 summary2_wide <- dcast(summary2, Result ~ Panelist) %>% select(c('Result', panelistLevels))
-summary_final_wide <- rbind(summary1_wide, summary2_wide)
 
-#k <- kable(summary_final, format.args = list(justify='right', width=500) ,row.names=NA, digits=1, format='html', table.attr = "style='width:90%;'")
+summary2a <- winsByTheme %>% filter(Theme == "With Theme")
+summary2a$Theme <- mapply(ifelse, test = (summary2a$Theme == "With Theme"), yes = 'Correct Guesses with Themes', no = 'Correct Guesses Without Themes')
+summary2a <- summary2a %>% select(Theme, Panelist, CorrectGuesses)
+names(summary2a) <- c("Result", "Panelist", "Statistic")
+summary2a_wide <- dcast(summary2a, Result ~ Panelist) %>% select(c('Result', panelistLevels))
 
-#tt1 <- ttheme_default()
-t <- tableGrob(summary_final_wide, rows=NULL, theme = ttheme_default(core=list(fg_params=list(fontface=3L, fontsize=20), bg_params = list(fill = c("#FFFF00", "#E69F00", "#56B4E9"), col=NA)), colhead=list(fg_params=list(fontface=4L, fontsize=20))) )
-t$widths <- unit(rep(1/ncol(t), ncol(t)), "npc")
+summary2b <- winsByTheme %>% filter(Theme == "With Theme")
+summary2b$Theme <- mapply(ifelse, test = (summary2b$Theme == "With Theme"), yes = 'Total Guesses with Themes', no = 'Total Guesses Without Themes')
+summary2b <- summary2b %>% select(Theme, Panelist, TotalGuesses)
+names(summary2b) <- c("Result", "Panelist", "Statistic")
+summary2b_wide <- dcast(summary2b, Result ~ Panelist) %>% select(c('Result', panelistLevels))
+```
+``` {r Plots_dataprep_summary3, echo = FALSE, message = FALSE}
+summary3 <- winsByTheme %>% filter(Theme != "With Theme")
+summary3$Theme <- mapply(ifelse, test = (summary3$Theme == "With Theme"), yes = '% Wins With Themes', no = '% Wins Without Themes')
+summary3 <- summary3 %>% select(Theme, Panelist, pctThemes)
+names(summary3) <- c("Result", "Panelist", "Statistic")
+summary3["Statistic"] <- summary3["Statistic"] * 100
+summary3_wide <- dcast(summary3, Result ~ Panelist)  
+# fill in any missing panelist names in the event that they don't appear
+# e.g. Steve hasn't answered a question without a theme
+summary3_wide[setdiff(panelistLevels, names(summary3_wide))] <- NA  
+summary3_wide <- summary3_wide %>% select(c('Result', panelistLevels))
 
-summary_final <- rbind(summary1, summary2)
+```
+``` {r Plots_dataprep_summary3a, echo = FALSE}
+summary3a <- winsByTheme %>% filter(Theme != "With Theme")
+summary3a$Theme <- mapply(ifelse, test = (summary3a$Theme == "With Theme"), yes = 'Correct Guesses with Themes', no = 'Correct Guesses Without Themes')
+summary3a <- summary3a %>% select(Theme, Panelist, CorrectGuesses)
+names(summary3a) <- c("Result", "Panelist", "Statistic")
+
+summary3a_wide <- dcast(summary3a, Result ~ Panelist)  
+# fill in any missing panelist names in the event that they don't appear
+# e.g. Steve hasn't answered a question without a theme
+summary3a_wide[setdiff(panelistLevels, names(summary3a_wide))] <- NA  
+summary3a_wide <- summary3a_wide %>% select(c('Result', panelistLevels))
+
+#summary3a_wide <- dcast(summary3a, Result ~ Panelist)  %>% select(c('Result', panelistLevels))
+```
+``` {r Plots_dataprep_summary3b, echo = FALSE}
+summary3b <- winsByTheme %>% filter(Theme != "With Theme")
+summary3b$Theme <- mapply(ifelse, test = (summary3b$Theme == "With Theme"), yes = 'Total Guesses with Themes', no = 'Total Guesses Without Themes')
+summary3b <- summary3b %>% select(Theme, Panelist, TotalGuesses)
+names(summary3b) <- c("Result", "Panelist", "Statistic")
+
+summary3b_wide <- dcast(summary3b, Result ~ Panelist)  
+# fill in any missing panelist names in the event that they don't appear
+# e.g. Steve hasn't answered a question without a theme
+summary3b_wide[setdiff(panelistLevels, names(summary3b_wide))] <- NA  
+summary3b_wide <- summary3b_wide %>% select(c('Result', panelistLevels))
+
+#summary3b_wide <- dcast(summary3b, Result ~ Panelist)  %>% select(c('Result', panelistLevels))
+```
+``` {r Plots_dataprep_summary_final, echo = FALSE}
+summary_final_wide <- rbind(format(summary1_wide, digits = 4), format(summary1a_wide, digits=0), format(summary1b_wide, digits = 0), format(summary2_wide, digits = 4), format(summary2a_wide, digits = 0), format(summary2b_wide, digits = 0), format(summary3_wide, digits=4), format(summary3a_wide, digits=0), format(summary3b_wide, digits=0))
+```
+``` {r Plots_render, echo = FALSE}
+t <- tableGrob(summary_final_wide, rows=NULL, theme = ttheme_default(core=list(fg_params=list(fontface=3L, fontsize=20), bg_params = list(fill = c("#FFFF00", "#FFFF00","#FFFF00","#E69F00", "#E69F00","#E69F00","#56B4E9","#56B4E9","#56B4E9"), col=NA)), colhead=list(fg_params=list(fontface=4L, fontsize=20))) )
+#t$widths <- unit(rep(1/ncol(t), ncol(t)), "npc")
+t$widths <- unit(c(.25,.125,.125,.125,.125,.125,.125), "npc")
+#print(summary_final_wide)
+summary_final <- rbind(summary1, summary2, summary3)
+
 summary_final$Panelist = factor(summary_final$Panelist, levels=panelistLevels)
 resultLevels = unique(summary_final$Result)
 summary_final$Result = factor(summary_final$Result, levels=resultLevels, ordered=TRUE)
 summary_final <- as.data.frame(summary_final) 
 
-p_final <- ggplot(summary_final, aes(x=Panelist, y=Pct)) + geom_bar(aes(fill=Result),stat="identity", position = position_dodge(width=.85), color="grey40", width=0.80) + ggtitle("Evan Leads Overall \n Cara Leads on Segments with Themes \n Evan Leads on Segments Without Themes") + 
-    theme(legend.position = c(.95,1.03), 
-          legend.justification = c(1,1), 
-          legend.key.size = unit(2, 'lines'), 
-          legend.background = element_blank(), 
-          text = element_text(size=25),
-          plot.title = element_text(hjust = 0.5)) + 
-    ylab('% Wins') + xlab('') + 
-    scale_fill_manual(values=c("#FFFF00", "#E69F00", "#56B4E9")) + 
-    geom_text(aes(group=Result, label=Pct), vjust=2, position = position_dodge(width=.85), size=6) +
-    guides(fill=guide_legend(title=""))
+
+# should make the titles dynamic
+p_final <- ggplot(summary_final, aes(x=Panelist, y=Statistic)) + geom_bar(aes(fill=Result),stat="identity", position = position_dodge(width=.85), color="grey40", width=0.80) + ggtitle("Evan Leads Overall \n Cara Leads on Segments with Themes \n Evan Leads on Segments Without Themes") + 
+     scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+     theme(legend.position = c(.95,1.03), 
+           legend.justification = c(1,1), 
+           legend.key.size = unit(2, 'lines'), 
+           legend.background = element_blank(), 
+           text = element_text(size=25),
+           plot.title = element_text(hjust = 0.5)) + 
+     ylab('% Wins') + xlab('') + 
+     scale_fill_manual(values=c("#FFFF00", "#E69F00", "#56B4E9")) + 
+     geom_text(aes(group=Result, label=percent(Statistic,.1)), vjust=2, position = position_dodge(width=.85), size=6) +
+     guides(fill=guide_legend(title=""))
 
 lay <- rbind(c(1), c(1), c(1), c(2))
+
 grid.arrange(grobs=list(p_final, t), layout_matrix=lay)
+#print(p_final)
+#print(t)
+
 ```
 
 **NOTE: ALL includes contributions from Special Guest Rogues not listed**  
@@ -231,11 +374,16 @@ showStatistic('% Wins Overall')
 ```
 
 ### Overall Performance
-``` {r winsOverall, echo = FALSE}
+``` {r winsOverall_, echo = FALSE}
 # Much of this code will need to be rewrite for 2019 to pull from the same set of data
+
 statTY <- dfPanelistPerf %>% group_by(Panelist) %>% summarise(Overall =  percent(sum(Correct)/n())) 
+
 totalTY <- dfOverallPerf %>% summarise(Overall =  percent(sum(Correct)/n())) 
+
 statTY <- rbind(statTY,c("ALL", totalTY[1,1])) %>% arrange(desc(Overall))
+
+
 
 # All of this code is to pull from the Excel Summary for 2017
 statName <- '% Wins Overall'
