@@ -20,7 +20,7 @@ library(gridExtra)
 library(forcats)
 
 debug_flag = FALSE # See description below.  If TRUE, will show the summarization values from spreadsheet as a validation
-Episode_range = 704:747
+Episode_range_TY = 704:747
 Episode_range_LY = 652:703
 Current_Year = 2019
 Last_Year = 2018
@@ -35,7 +35,7 @@ The Skeptics Guide to the Universe is a weekly podcast hosted by Dr. Steven Nove
 ## Year End Episode
 At the end of the calendar year, Dr. Novella host a year in review episode where the panel reviews their performance at Science or Fiction.  
 
-## `r Current_Year` Summary - Episodes# `r Episode_range[1]` - `r tail(Episode_range,1)`
+## `r Current_Year` Summary - Episodes# `r Episode_range_TY [1]` - `r tail(Episode_range_TY ,1)`
 
 * TBD    
 
@@ -63,16 +63,17 @@ dfSGUSummary <- select(dfSGUSummary, -Statistic)
 dfSGUSummary <- select(dfSGUSummary, c(Rogues, "ALL"))
 dfSGUSummary <- t(dfSGUSummary)
 
+# Want to change to not filter down to the current year range right away so that we can do smarter YoY changes
+# And cummulative statistics
 
-# Current Year dataframes
 dfEpisodeData <- readxl::read_excel(pathtofile, sheet = 1 )
 dfEpisodeData <- as.data.frame(dfEpisodeData)
-dfEpisodeData <- select(dfEpisodeData, c(1,2,7,8)) %>% filter(Episode %in% Episode_range)
+dfEpisodeData <- select(dfEpisodeData, c(1,2,7,8)) # %>% filter(Episode %in% Episode_range_TY )
     
 dfItemsSelected <- readxl::read_excel(pathtofile, sheet =2)
 dfItemsSelected <- as.data.frame(dfItemsSelected)
 dfItemsSelected <- select(dfItemsSelected, c('Episode', 'Panelist', 'ItemSelected', 'AnsweringOrder'))
-dfItemsSelected <- filter(dfItemsSelected, Episode %in% Episode_range)
+#dfItemsSelected <- filter(dfItemsSelected, Episode %in% Episode_range_TY )
     
 dfFictionItems <- select(dfEpisodeData, c('Episode', 'FictionItem', 'Theme'))
 
@@ -84,20 +85,46 @@ dfPanelistPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, P
 
 dfOverallPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist, Theme) # %>% filter(Panelist %in% Rogues)
 
-# Append number correct for each episode
+# Append number correct for each episode to dfEpisodeData
 dfCorrect <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% summarise(CorrectAnswers = sum(Correct)))
 dfEpisodeData <- inner_join(dfEpisodeData, dfCorrect, by='Episode')
 
-# Append panelist who answered first for each episode
+# Append panelist who answered first for each episode to dfEpisodeData
 dfFirstPanelist <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% filter(AnsweringOrder==1) %>% select(Episode, FirstPanelist = Panelist))
 dfEpisodeData <- inner_join(dfEpisodeData, dfFirstPanelist, by='Episode')
 
-# Append number of panelists for each episode
+dfSecondPanelist <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% filter(AnsweringOrder==2) %>% select(Episode, SecondPanelist = Panelist))
+if(dim(dfSecondPanelist)[1] != 0) {
+    dfEpisodeData <- left_join(dfEpisodeData, dfSecondPanelist, by='Episode') 
+    }
+
+dfThirdPanelist <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% filter(AnsweringOrder==3) %>% select(Episode, ThirdPanelist = Panelist))
+if(dim(dfThirdPanelist)[1] != 0) {
+    dfEpisodeData <- left_join(dfEpisodeData, dfThirdPanelist, by='Episode') 
+    }
+
+dfFourthPanelist <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% filter(AnsweringOrder==4) %>% select(Episode, FourthPanelist = Panelist))
+if(dim(dfFourthPanelist)[1] != 0) {
+    dfEpisodeData <- left_join(dfEpisodeData, dfFourthPanelist, by='Episode') 
+    }
+
+dfFifthPanelist <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% filter(AnsweringOrder==5) %>% select(Episode, FifthPanelist = Panelist))
+if(dim(dfFifthPanelist)[1] != 0) {
+    dfEpisodeData <- left_join(dfEpisodeData, dfFifthPanelist, by='Episode') 
+    }
+
+dfSixthPanelist <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% filter(AnsweringOrder==6) %>% select(Episode, SixthPanelist = Panelist))
+if(dim(dfSixthPanelist)[1] != 0) {
+    # dfEpisodeData <- inner_join(dfEpisodeData, dfSixthPanelist, by='Episode') 
+    }
+
+# Append number of panelists for each episode to dfEpisodeData
 dfTotalPanelists <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% summarise(TotalPanelists = n()) %>% select(Episode, TotalPanelists))
 dfEpisodeData <- inner_join(dfEpisodeData, dfTotalPanelists, by='Episode')
 
 
-# names(dfEpisodeData)
+
+#print(names(dfEpisodeData))
 ## [1] "Episode"        "Theme"          "FictionItem"    "Host"          
 ## [5] "CorrectAnswers" "FirstPanelist"  "TotalPanelists"
 
@@ -151,37 +178,49 @@ dfEpisodeData <- inner_join(dfEpisodeData, dfTotalPanelists, by='Episode')
 ## 4     704              4       1      Jay    With Theme
 ## 5     705              1       0      Jay Without Theme
 
+# Create This Year and Last Year Filtered Dataframes
+dfEpisodeData_TY <- dfEpisodeData %>% filter(Episode %in% Episode_range_TY )
+dfEpisodeData_LY <- dfEpisodeData %>% filter(Episode %in% Episode_range_LY )
+
+dfItemsSelected_TY <- dfItemsSelected %>% filter(Episode %in% Episode_range_TY )
+dfItemsSelected_LY <- dfItemsSelected %>% filter(Episode %in% Episode_range_LY )
+
+dfPanelistPerf_TY <- dfPanelistPerf %>% filter(Episode %in% Episode_range_TY )
+dfPanelistPerf_LY <- dfPanelistPerf %>% filter(Episode %in% Episode_range_LY )
+
+dfOverallPerf_TY <- dfOverallPerf %>% filter(Episode %in% Episode_range_TY )
+dfOverallPerf_LY <- dfOverallPerf %>% filter(Episode %in% Episode_range_LY )
 
 # Prior Year dataframes
-dfEpisodeData_LY <- readxl::read_excel(pathtofile, sheet = 1 )
-dfEpisodeData_LY <- as.data.frame(dfEpisodeData_LY)
-dfEpisodeData_LY <- select(dfEpisodeData_LY, 1:8) %>% filter(Episode %in% Episode_range_LY)
+# dfEpisodeData_LY <- readxl::read_excel(pathtofile, sheet = 1 )
+# dfEpisodeData_LY <- as.data.frame(dfEpisodeData_LY)
+# dfEpisodeData_LY <- select(dfEpisodeData_LY, 1:8) %>% filter(Episode %in% Episode_range_LY)
 
     
-dfItemsSelected_LY <- readxl::read_excel(pathtofile, sheet =2)
-dfItemsSelected_LY <- as.data.frame(dfItemsSelected_LY)
-dfItemsSelected_LY <- select(dfItemsSelected_LY, c('Episode', 'Panelist', 'ItemSelected', 'AnsweringOrder'))
-dfItemsSelected_LY <- filter(dfItemsSelected_LY, Episode %in% Episode_range_LY)
+# dfItemsSelected_LY <- readxl::read_excel(pathtofile, sheet =2)
+# dfItemsSelected_LY <- as.data.frame(dfItemsSelected_LY)
+# dfItemsSelected_LY <- select(dfItemsSelected_LY, c('Episode', 'Panelist', 'ItemSelected', 'AnsweringOrder'))
+# dfItemsSelected_LY <- filter(dfItemsSelected_LY, Episode %in% Episode_range_LY)
 
 
-dfFictionItems_LY <- select(dfEpisodeData_LY, c('Episode', 'FictionItem', 'Theme'))
-dfItemsSelected_LY <- inner_join(dfItemsSelected_LY, dfFictionItems_LY, by='Episode')
-dfItemsSelected_LY$Correct <- mapply(ifelse, test = (dfItemsSelected_LY$ItemSelected == dfItemsSelected_LY$FictionItem), yes = 1, no = 0 )
-dfItemsSelected_LY$Theme <- mapply(ifelse, test = !is.na(dfItemsSelected_LY$Theme), yes = 'With Theme', no = 'Without Theme')
-dfPanelistPerf_LY <- dfItemsSelected_LY %>% select(Episode, AnsweringOrder, Correct, Panelist, Theme) %>% filter(Panelist %in% Rogues) 
-dfOverallPerf_LY <- dfItemsSelected_LY %>% select(Episode, AnsweringOrder, Correct, Panelist, Theme) # %>% filter(Panelist %in% Rogues)
+# dfFictionItems_LY <- select(dfEpisodeData_LY, c('Episode', 'FictionItem', 'Theme'))
+# dfItemsSelected_LY <- inner_join(dfItemsSelected_LY, dfFictionItems_LY, by='Episode')
+# dfItemsSelected_LY$Correct <- mapply(ifelse, test = (dfItemsSelected_LY$ItemSelected == dfItemsSelected_LY$FictionItem), yes = 1, no = 0 )
+# dfItemsSelected_LY$Theme <- mapply(ifelse, test = !is.na(dfItemsSelected_LY$Theme), yes = 'With Theme', no = 'Without Theme')
+# dfPanelistPerf_LY <- dfItemsSelected_LY %>% select(Episode, AnsweringOrder, Correct, Panelist, Theme) %>% filter(Panelist %in% Rogues) 
+# dfOverallPerf_LY <- dfItemsSelected_LY %>% select(Episode, AnsweringOrder, Correct, Panelist, Theme) # %>% filter(Panelist %in% Rogues)
 
 # Append number correct for each episode
-dfCorrect_LY <- as.data.frame(dfItemsSelected_LY %>% group_by(Episode) %>% summarise(CorrectAnswers = sum(Correct)))
-dfEpisodeData_LY <- inner_join(dfEpisodeData_LY, dfCorrect_LY, by='Episode')
+# dfCorrect_LY <- as.data.frame(dfItemsSelected_LY %>% group_by(Episode) %>% summarise(CorrectAnswers = sum(Correct)))
+# dfEpisodeData_LY <- inner_join(dfEpisodeData_LY, dfCorrect_LY, by='Episode')
 
 # Append panelist who answered first for each episode
-dfFirstPanelist_LY <- as.data.frame(dfItemsSelected_LY %>% group_by(Episode) %>% filter(AnsweringOrder==1) %>% select(Episode, FirstPanelist = Panelist))
-dfEpisodeData_LY <- inner_join(dfEpisodeData_LY, dfFirstPanelist_LY, by='Episode')
+# dfFirstPanelist_LY <- as.data.frame(dfItemsSelected_LY %>% group_by(Episode) %>% filter(AnsweringOrder==1) %>% select(Episode, FirstPanelist = Panelist))
+# dfEpisodeData_LY <- inner_join(dfEpisodeData_LY, dfFirstPanelist_LY, by='Episode')
 
 # Append number of panelists for each episode
-dfTotalPanelists_LY <- as.data.frame(dfItemsSelected_LY %>% group_by(Episode) %>% summarise(TotalPanelists = n()) %>% select(Episode, TotalPanelists))
-dfEpisodeData_LY <- inner_join(dfEpisodeData_LY, dfTotalPanelists_LY, by='Episode')
+# dfTotalPanelists_LY <- as.data.frame(dfItemsSelected_LY %>% group_by(Episode) %>% summarise(TotalPanelists = n()) %>% select(Episode, TotalPanelists))
+# dfEpisodeData_LY <- inner_join(dfEpisodeData_LY, dfTotalPanelists_LY, by='Episode')
 
 
 showStatistic <- function(statName, ispercentage = TRUE) {
@@ -211,10 +250,10 @@ showStatistic_2 <- function(lstResults, ispercentage = TRUE) {
 
 ``` {r Plots_dataprep1, echo = FALSE}
 # Overall Performance
-winsOverallByPanelist <- dfPanelistPerf %>% group_by(Panelist) %>% summarise(Overall =  sum(Correct)/n(), CorrectGuesses = sum(Correct), TotalGuesses=n())
+winsOverallByPanelist <- dfPanelistPerf_TY %>% group_by(Panelist) %>% summarise(Overall =  sum(Correct)/n(), CorrectGuesses = sum(Correct), TotalGuesses=n())
 winsOverallByPanelist <- as.data.frame(winsOverallByPanelist)
 
-winsOverallTotal <- dfOverallPerf %>% summarise(Overall =  sum(Correct)/n(), CorrectGuesses = sum(Correct), TotalGuesses=n())
+winsOverallTotal <- dfOverallPerf_TY %>% summarise(Overall =  sum(Correct)/n(), CorrectGuesses = sum(Correct), TotalGuesses=n())
 
 
 winsOverallTotal$Panelist ='ALL'
@@ -229,11 +268,11 @@ winsOverall <- rbind(winsOverallByPanelist, winsOverallTotal) %>% arrange(desc(O
 panelistLevels = winsOverall$Panelist # Preserve order for second graph
 ```
 ``` {r Plots_dataprep2, echo = FALSE}
-winsByTheme <- dfPanelistPerf %>% group_by(Panelist, Theme) %>% summarise(pctThemes = sum(Correct)/n(), CorrectGuesses = sum(Correct), TotalGuesses=n())
+winsByTheme <- dfPanelistPerf_TY %>% group_by(Panelist, Theme) %>% summarise(pctThemes = sum(Correct)/n(), CorrectGuesses = sum(Correct), TotalGuesses=n())
 
 
 
-winsByThemeTotal <- dfOverallPerf %>% group_by(Theme) %>% summarise(pctThemes = sum(Correct)/n(), CorrectGuesses = sum(Correct), TotalGuesses=n()) %>% mutate(Panelist = 'ALL') %>% select(Panelist, Theme, pctThemes, CorrectGuesses, TotalGuesses)
+winsByThemeTotal <- dfOverallPerf_TY %>% group_by(Theme) %>% summarise(pctThemes = sum(Correct)/n(), CorrectGuesses = sum(Correct), TotalGuesses=n()) %>% mutate(Panelist = 'ALL') %>% select(Panelist, Theme, pctThemes, CorrectGuesses, TotalGuesses)
 
 
 winsByTheme <- as.data.frame(winsByTheme)
@@ -362,7 +401,7 @@ grid.arrange(grobs=list(p_final, t), layout_matrix=lay)
 
 **NOTE: ALL includes contributions from Special Guest Rogues not listed**  
 Raw data and some visuals are located in [This Excel file](https://github.com/wayneheller/SGU_Science_or_Fiction/blob/master/SGU_Science_or_Fiction.xlsx) Click the Download button on this github page.  
-Last Year comparison is based on Episodes 652 - 703
+Last Year comparison is based on Episodes `r Episode_range_LY [1]` - `r tail(Episode_range_LY ,1)`
 
 ``` {r winsOverall_debug, echo = FALSE, eval = debug_flag}
 Overall Win Percentage  
@@ -373,9 +412,9 @@ showStatistic('% Wins Overall')
 ``` {r winsOverall_, echo = FALSE}
 # Much of this code will need to be rewrite for 2019 to pull from the same set of data
 #  -- This Year Overall ---
-statTY <- dfPanelistPerf %>% group_by(Panelist) %>% summarise(Overall =  percent(sum(Correct)/n())) 
+statTY <- dfPanelistPerf_TY %>% group_by(Panelist) %>% summarise(Overall =  percent(sum(Correct)/n())) 
 
-totalTY <- dfOverallPerf %>% summarise(Overall =  percent(sum(Correct)/n())) 
+totalTY <- dfOverallPerf_TY %>% summarise(Overall =  percent(sum(Correct)/n())) 
 
 statTY <- rbind(statTY,c("ALL", totalTY[1,1])) %>% arrange(desc(Overall))
 
@@ -415,8 +454,8 @@ showStatistic('% Wins with Themes')
 
 ``` {r winsThemes, echo = FALSE}
 # --- Wins with Themes This Year --
-statTY <- dfPanelistPerf %>% group_by(Panelist) %>% filter(Episode %in% dfEpisodeData[!is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
-totalTY <- dfOverallPerf %>% filter(Episode %in% dfEpisodeData[!is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
+statTY <- dfPanelistPerf_TY %>% group_by(Panelist) %>% filter(Episode %in% dfEpisodeData_TY[!is.na(dfEpisodeData_TY$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
+totalTY <- dfOverallPerf_TY %>% filter(Episode %in% dfEpisodeData_TY[!is.na(dfEpisodeData_TY$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
 statTY <- rbind(statTY,c("ALL", totalTY[1,1])) %>% arrange(desc(pctThemes))
 
 # --- Wins with Themes Last Year --
@@ -452,8 +491,9 @@ showStatistic('% Wins without Themes')
 
 ``` {r winswithoutThemes, echo = FALSE}
 # --- Wins without Themes This Year ---
-statTY <- dfPanelistPerf %>% group_by(Panelist) %>% filter(Episode %in% dfEpisodeData[is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n()))
-totalTY <- dfOverallPerf %>% filter(Episode %in% dfEpisodeData[is.na(dfEpisodeData$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
+
+statTY <- dfPanelistPerf_TY %>% group_by(Panelist) %>% filter(Episode %in% dfEpisodeData_TY[is.na(dfEpisodeData_TY$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n()))
+totalTY <- dfOverallPerf_TY %>% filter(Episode %in% dfEpisodeData_TY[is.na(dfEpisodeData_TY$Theme), 'Episode']) %>% summarise(pctThemes = percent(sum(Correct)/n())) 
 statTY <- rbind(statTY,c("ALL", totalTY[1,1])) %>% arrange(desc(pctThemes))
 
 # --- Wins without Themes Last Year ---
@@ -487,7 +527,7 @@ showStatistic('Solo Wins', ispercentage = FALSE)
 ```
 
 ``` {r SoloWins, echo = FALSE}
-dfSoloWins <- dfItemsSelected[dfItemsSelected$Episode %in% dfEpisodeData[dfEpisodeData$CorrectAnswers==1, 'Episode'] & dfItemsSelected$Correct==1, c('Episode', 'Panelist')]
+dfSoloWins <- dfItemsSelected_TY[dfItemsSelected_TY$Episode %in% dfEpisodeData_TY[dfEpisodeData_TY$CorrectAnswers==1, 'Episode'] & dfItemsSelected_TY$Correct==1, c('Episode', 'Panelist')]
 stat <- dfSoloWins %>% group_by(Panelist) %>% summarise(SoloWins = n()) %>% arrange(desc(SoloWins))
 total <- dfSoloWins  %>% summarise(SoloWins = n()) 
 stat <- rbind(stat,c("TOTAL", total[1,1])) 
@@ -503,7 +543,7 @@ showStatistic('Longest Winning Streak', ispercentage = FALSE)
 wins = list()
 losses = list()
 for (rogue in Rogues) {
-    df <- dfItemsSelected %>% filter(Panelist == rogue)
+    df <- dfItemsSelected_TY %>% filter(Panelist == rogue)
     x = rle(df$Correct)
     wins[rogue] = max(x$lengths[x$values == 1])
     losses[rogue] = max(x$lengths[x$values == 0])
@@ -533,7 +573,7 @@ showStatistic_2(stat)
 showStatistic('Panel Performance When Answering First')
 ```
 ``` {r PanelPerformance, echo = FALSE}
-statTY <- dfEpisodeData %>% filter(FirstPanelist %in% Rogues) %>% group_by(FirstPanelist) %>% summarise(PanelPerformance = percent(sum(CorrectAnswers)/sum(TotalPanelists))) %>% arrange(desc(PanelPerformance))
+statTY <- dfEpisodeData_TY %>% filter(FirstPanelist %in% Rogues) %>% group_by(FirstPanelist) %>% summarise(PanelPerformance = percent(sum(CorrectAnswers)/sum(TotalPanelists))) %>% arrange(desc(PanelPerformance))
 
 statLY <- dfEpisodeData_LY %>% filter(FirstPanelist %in% Rogues) %>% group_by(FirstPanelist) %>% summarise(PanelPerformance = percent(sum(CorrectAnswers)/sum(TotalPanelists))) %>% arrange(desc(PanelPerformance))
 names(statTY) <- c('Panelist', 'PanelPerformance')
@@ -566,8 +606,8 @@ kable(statYoY, format.args = list(justify='right', width=500) , rownames=TRUE,  
 showStatistic('Panelist Performance When Answering First')
 ```
 ``` {r PanelistPerformance, echo = FALSE}
-stat <- dfPanelistPerf %>% group_by(Panelist) %>% filter(AnsweringOrder==1) %>% summarise(pctAnsweringFirst = percent(sum(Correct)/n())) %>% arrange(desc(pctAnsweringFirst))
-total <- dfOverallPerf %>% filter(AnsweringOrder==1) %>% summarise(pctAnsweringFirst = percent(sum(Correct)/n())) %>% arrange(desc(pctAnsweringFirst))
+stat <- dfPanelistPerf_TY %>% group_by(Panelist) %>% filter(AnsweringOrder==1) %>% summarise(pctAnsweringFirst = percent(sum(Correct)/n())) %>% arrange(desc(pctAnsweringFirst))
+total <- dfOverallPerf_TY %>% filter(AnsweringOrder==1) %>% summarise(pctAnsweringFirst = percent(sum(Correct)/n())) %>% arrange(desc(pctAnsweringFirst))
 statTY <- rbind(stat,c("ALL", total[1,1])) %>% arrange(desc(pctAnsweringFirst))
 names(statTY) <- c('Panelist', 'PanelPerformance')
 
@@ -599,7 +639,7 @@ showStatistic('Host Sweeps', ispercentage = FALSE)
 ```
 
 ``` {r HostSweeps, echo = FALSE}
-dfHostSweeps <- dfEpisodeData[dfEpisodeData$CorrectAnswers==0, c('Episode', 'Host')]
+dfHostSweeps <- dfEpisodeData_TY[dfEpisodeData_TY$CorrectAnswers==0, c('Episode', 'Host')]
 stat <- dfHostSweeps %>% group_by(Host) %>% summarize(HostSweeps = n()) %>% arrange(desc(HostSweeps))
 total <- dfHostSweeps %>% summarize(HostSweeps = n())
 statTY <- rbind(stat,c("ALL", total[1,1])) 
@@ -639,7 +679,7 @@ showStatistic('Panelist Sweeps', ispercentage = FALSE)
 ```
 
 ``` {r PanelSweeps, echo = FALSE}
-statTY <- dfItemsSelected[dfItemsSelected$Episode %in% dfEpisodeData[dfEpisodeData$CorrectAnswers == dfEpisodeData$TotalPanelists,"Episode"],] %>% group_by(Panelist) %>% summarise(PanelistSweeps = n()) %>% filter(Panelist %in% Rogues) %>% arrange(desc(PanelistSweeps))
+statTY <- dfItemsSelected_TY[dfItemsSelected_TY$Episode %in% dfEpisodeData_TY[dfEpisodeData_TY$CorrectAnswers == dfEpisodeData_TY$TotalPanelists,"Episode"],] %>% group_by(Panelist) %>% summarise(PanelistSweeps = n()) %>% filter(Panelist %in% Rogues) %>% arrange(desc(PanelistSweeps))
 #showStatistic_2(statTY)
 statLY <- dfItemsSelected_LY[dfItemsSelected_LY$Episode %in% dfEpisodeData_LY[dfEpisodeData_LY$CorrectAnswers == dfEpisodeData_LY$TotalPanelists,"Episode"],] %>% group_by(Panelist) %>% summarise(PanelistSweeps = n()) %>% filter(Panelist %in% Rogues) %>% arrange(desc(PanelistSweeps))
 
@@ -666,7 +706,7 @@ kable(statYoY, format.args = list(justify='right', width=500) , rownames=TRUE,  
 
 
 ``` {r DuoPerformance_1, echo = FALSE}
-    dfDuoPerf <- inner_join(dfItemsSelected, dfItemsSelected, by='Episode')
+    dfDuoPerf <- inner_join(dfItemsSelected_TY, dfItemsSelected_TY, by='Episode')
     
     dfDuo <- dfDuoPerf %>% filter(Panelist.x %in% Rogues) %>% filter(Panelist.y %in% Rogues) %>% group_by(Panelist.x, Panelist.y, ItemSelected.x == ItemSelected.y) %>% summarise('Percent Correct' = percent(sum(Correct.x)/n()))
    
@@ -700,5 +740,17 @@ Note: Numbers along the diagonal are the same as individual performance for the 
 
 ``` {r DuoPerformance_3, echo = FALSE}
     kable(dfDuoWide, format.args = list(justify='right', width=500) , rownames=TRUE, digits=1, align = c('l', 'c', 'c','c','c','c'), format='html', table.attr = "style='width:35%;'")
+
+
+
+```
+#### How Well Each Answering Order Combination Has Performed Since 2018
+For each combination, the number of times this combination has occurred, the total correct answers, total possible answers, and the accuracy percentage (correct/possible) is listed below.
+
+``` {r AnsweringOrder, echo = FALSE}
+dfAnsweringOrderPerf <- dfEpisodeData%>% group_by(FirstPanelist, SecondPanelist, ThirdPanelist, FourthPanelist, FifthPanelist)  %>% summarise(Occurred = sum(n()), TotalCorrect = sum(CorrectAnswers), TotalAnswers = sum(TotalPanelists), PercentCorrect = TotalCorrect / TotalAnswers * 100) %>% arrange(desc(PercentCorrect), desc(Occurred))
+
+names(dfAnsweringOrderPerf) <- c('First', 'Second', 'Third', 'Fourth', 'Fifth', 'Frequency', 'Correct', 'Possible','Accuracy(%)')
+kable(dfAnsweringOrderPerf, format.args = list(justify='right', width=500) , rownames=FALSE, digits=1, align = c('l', 'l', 'l','l','l','c','c','c', 'r'),format='html',table.attr = "style='width:75%;'")
 ```
 
