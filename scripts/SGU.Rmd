@@ -22,7 +22,7 @@ library(forcats)
 debug_flag = FALSE # See description below.  If TRUE, will show the summarization values from spreadsheet as a validation
 Episode_range_TY = 704:747
 Episode_range_LY = 652:703
-Current_Year = 2019
+Current_Year = 2019 # There is one place in the code where I've not yet been able to parameterize the Current Year.  Do a Seach and Replace to find.
 Last_Year = 2018
 XL_SHEET_2017_SUMMARY = 4
 XL_SHEET_2018_SUMMARY = 5
@@ -299,6 +299,9 @@ summary1a_wide <- dcast(summary1a, Result ~ Panelist) %>% select(c('Result', pan
 summary1b <- winsOverall %>% mutate(Result = "Total Guesses Overall") %>% select(Result, Panelist, TotalGuesses) 
 names(summary1b) <- c("Result", "Panelist", "Statistic")
 summary1b_wide <- dcast(summary1b, Result ~ Panelist) %>% select(c('Result', panelistLevels))
+
+summary1 <- summary1 %>% arrange(desc(Statistic))
+OverallLeader <- summary1[1,2]
 ```
 ``` {r Plots_dataprep_summary2, echo = FALSE}
 summary2 <- winsByTheme %>% filter(Theme == "With Theme")
@@ -319,6 +322,9 @@ summary2b$Theme <- mapply(ifelse, test = (summary2b$Theme == "With Theme"), yes 
 summary2b <- summary2b %>% select(Theme, Panelist, TotalGuesses)
 names(summary2b) <- c("Result", "Panelist", "Statistic")
 summary2b_wide <- dcast(summary2b, Result ~ Panelist) %>% select(c('Result', panelistLevels))
+
+summary2 <- summary2 %>% arrange(desc(Statistic))
+WithThemeLeader <- summary2[1,2]
 ```
 ``` {r Plots_dataprep_summary3, echo = FALSE, message = FALSE}
 summary3 <- winsByTheme %>% filter(Theme != "With Theme")
@@ -359,6 +365,9 @@ summary3b_wide <- dcast(summary3b, Result ~ Panelist)
 summary3b_wide[setdiff(panelistLevels, names(summary3b_wide))] <- NA  
 summary3b_wide <- summary3b_wide %>% select(c('Result', panelistLevels))
 
+summary3 <- summary3 %>% arrange(desc(Statistic))
+WithoutThemeLeader = summary3[1,2]
+
 #summary3b_wide <- dcast(summary3b, Result ~ Panelist)  %>% select(c('Result', panelistLevels))
 ```
 ``` {r Plots_dataprep_summary_final, echo = FALSE}
@@ -378,7 +387,8 @@ summary_final <- as.data.frame(summary_final)
 
 
 # should make the titles dynamic
-p_final <- ggplot(summary_final, aes(x=Panelist, y=Statistic)) + geom_bar(aes(fill=Result),stat="identity", position = position_dodge(width=.85), color="grey40", width=0.80) + ggtitle("Evan Leads Overall \n Cara Leads on Segments with Themes \n Evan Leads on Segments Without Themes") + 
+p_final <- ggplot(summary_final, aes(x=Panelist, y=Statistic)) + geom_bar(aes(fill=Result),stat="identity", position = position_dodge(width=.85), color="grey40", width=0.80) + 
+    ggtitle(paste(OverallLeader, "Leads Overall \n", WithThemeLeader, "Leads on Segments with Themes \n", WithoutThemeLeader,"Leads on Segments Without Themes")) + 
      # scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
      theme(legend.position = c(.95,1.03), 
            legend.justification = c(1,1), 
@@ -396,6 +406,7 @@ lay <- rbind(c(1), c(1), c(1), c(2))
 grid.arrange(grobs=list(p_final, t), layout_matrix=lay)
 #print(p_final)
 #print(t)
+
 
 ```
 
@@ -745,12 +756,17 @@ Note: Numbers along the diagonal are the same as individual performance for the 
 
 ```
 #### How Well Each Answering Order Combination Has Performed Since 2018
-For each combination, the number of times this combination has occurred, the total correct answers, total possible answers, and the accuracy percentage (correct/possible) is listed below.
+For each combination, the number of times this combination has occurred (frequency), the total correct answers, total possible answers, and the accuracy percentage (correct/possible) is listed below.
 
-``` {r AnsweringOrder, echo = FALSE}
+##### Answering Order Combinations with Frequency >= 3
+``` {r AnsweringOrderFiltered, echo = FALSE}
 dfAnsweringOrderPerf <- dfEpisodeData%>% group_by(FirstPanelist, SecondPanelist, ThirdPanelist, FourthPanelist, FifthPanelist)  %>% summarise(Occurred = sum(n()), TotalCorrect = sum(CorrectAnswers), TotalAnswers = sum(TotalPanelists), PercentCorrect = TotalCorrect / TotalAnswers * 100) %>% arrange(desc(PercentCorrect), desc(Occurred))
 
 names(dfAnsweringOrderPerf) <- c('First', 'Second', 'Third', 'Fourth', 'Fifth', 'Frequency', 'Correct', 'Possible','Accuracy(%)')
+kable(dfAnsweringOrderPerf %>% filter(Frequency >=3), format.args = list(justify='right', width=500) , rownames=FALSE, digits=1, align = c('l', 'l', 'l','l','l','c','c','c', 'r'),format='html',table.attr = "style='width:75%;'")
+```
+##### Answering Order Combinations Full Detail
+``` {r AnsweringOrderUnfiltered, echo = FALSE}
 kable(dfAnsweringOrderPerf, format.args = list(justify='right', width=500) , rownames=FALSE, digits=1, align = c('l', 'l', 'l','l','l','c','c','c', 'r'),format='html',table.attr = "style='width:75%;'")
 ```
 
