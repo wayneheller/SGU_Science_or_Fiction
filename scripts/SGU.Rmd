@@ -20,7 +20,7 @@ library(gridExtra)
 library(forcats)
 
 debug_flag = FALSE # See description below.  If TRUE, will show the summarization values from spreadsheet as a validation
-Episode_range_TY = 704:747
+Episode_range_TY = 704:750
 Episode_range_LY = 652:703
 Current_Year = 2019 # There is one place in the code where I've not yet been able to parameterize the Current Year.  Do a Seach and Replace to find.
 Last_Year = 2018
@@ -760,13 +760,15 @@ For each combination, the number of times this combination has occurred (frequen
 
 ##### Answering Order Combinations with Frequency >= 3
 ``` {r AnsweringOrderFiltered, echo = FALSE}
-dfAnsweringOrderPerf <- dfEpisodeData%>% group_by(FirstPanelist, SecondPanelist, ThirdPanelist, FourthPanelist, FifthPanelist)  %>% summarise(Occurred = sum(n()), TotalCorrect = sum(CorrectAnswers), TotalAnswers = sum(TotalPanelists), PercentCorrect = TotalCorrect / TotalAnswers * 100) %>% arrange(desc(PercentCorrect), desc(Occurred))
+dfEpisodeData$PanelistSweep <- mapply(ifelse, test = (dfEpisodeData$CorrectAnswers == dfEpisodeData$TotalPanelists), yes = 1, no = 0 )
 
-names(dfAnsweringOrderPerf) <- c('First', 'Second', 'Third', 'Fourth', 'Fifth', 'Frequency', 'Correct', 'Possible','Accuracy(%)')
-kable(dfAnsweringOrderPerf %>% filter(Frequency >=3), format.args = list(justify='right', width=500) , rownames=FALSE, digits=1, align = c('l', 'l', 'l','l','l','c','c','c', 'r'),format='html',table.attr = "style='width:75%;'")
+dfAnsweringOrderPerf <- dfEpisodeData%>% group_by(FirstPanelist, SecondPanelist, ThirdPanelist, FourthPanelist, FifthPanelist)  %>% summarise(Occurred = sum(n()), TotalCorrect = sum(CorrectAnswers), TotalAnswers = sum(TotalPanelists), TotalPanelistSweeps = sum(PanelistSweep), PercentCorrect = TotalCorrect / TotalAnswers * 100) %>% arrange(desc(PercentCorrect), desc(Occurred))
+
+names(dfAnsweringOrderPerf) <- c('First', 'Second', 'Third', 'Fourth', 'Fifth', 'Frequency', 'Correct', 'Possible','Sweeps', 'Accuracy(%)')
+kable(dfAnsweringOrderPerf %>% filter(Frequency >=3), format.args = list(justify='right', width=500) , rownames=FALSE, digits=1, align = c('l', 'l', 'l','l','l','c','c','c','c', 'r'),format='html',table.attr = "style='width:75%;'")
 ```
 ##### Answering Order Combinations Full Detail
 ``` {r AnsweringOrderUnfiltered, echo = FALSE}
-kable(dfAnsweringOrderPerf, format.args = list(justify='right', width=500) , rownames=FALSE, digits=1, align = c('l', 'l', 'l','l','l','c','c','c', 'r'),format='html',table.attr = "style='width:75%;'")
+kable(dfAnsweringOrderPerf, format.args = list(justify='right', width=500) , rownames=FALSE, digits=1, align = c('l', 'l', 'l','l','l','c','c','c','c', 'r'),format='html',table.attr = "style='width:75%;'")
 ```
 
