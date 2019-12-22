@@ -1,7 +1,7 @@
 ---
 title: "SGU 2019 Science or Fiction Stats"
 author: "Wayne Heller"
-date: "November 3, 2019"
+date: "December 22, 2019"
 output: html_document
 ---
 
@@ -20,7 +20,7 @@ library(gridExtra)
 library(forcats)
 
 debug_flag = FALSE # See description below.  If TRUE, will show the summarization values from spreadsheet as a validation
-Episode_range_TY = 704:750
+Episode_range_TY = 704:754
 Episode_range_LY = 652:703
 Current_Year = 2019 # There is one place in the code where I've not yet been able to parameterize the Current Year.  Do a Seach and Replace to find.
 Last_Year = 2018
@@ -37,7 +37,17 @@ At the end of the calendar year, Dr. Novella host a year in review episode where
 
 ## `r Current_Year` Summary - Episodes# `r Episode_range_TY [1]` - `r tail(Episode_range_TY ,1)`
 
-* TBD    
+* NOTE: Episode 715 excluded - the correct answer was contested and negated in a subsequent episode.
+* Cara Wins Overall and had best performance on questions with and withouts themes
+* Panelist performance on questions without a theme decreased dramatically from last year (except for Cara)
+* The panel performs best with Cara or Bob answer first
+* Going first is a disadvantage for everyone except Cara this year
+* Steve had twice as many host sweeps this year compared to last
+* There were fewer panelist sweeps this year compared to last
+* Steve snapped a 6 game losing streak as panelist starting with episode 686.
+* Bob should consider GWC Go with Cara more often
+* Over the last 2 years, the answering order of {Cara, Jay, Evan, Bob} and {Cara, Bob, Evan, Jay} have answered correctly over 80% of the time.
+* Over the same period, the answering order of {Jay, Bob, Evan, Cara} has only answered correctly 33% of the time.
 
 ## `r Current_Year` Summary Statistics 
  
@@ -114,9 +124,9 @@ if(dim(dfFifthPanelist)[1] != 0) {
     }
 
 dfSixthPanelist <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% filter(AnsweringOrder==6) %>% select(Episode, SixthPanelist = Panelist))
-if(dim(dfSixthPanelist)[1] != 0) {
+#if(dim(dfSixthPanelist)[1] != 0) {
     # dfEpisodeData <- inner_join(dfEpisodeData, dfSixthPanelist, by='Episode') 
-    }
+#    }
 
 # Append number of panelists for each episode to dfEpisodeData
 dfTotalPanelists <- as.data.frame(dfItemsSelected %>% group_by(Episode) %>% summarise(TotalPanelists = n()) %>% select(Episode, TotalPanelists))
@@ -761,14 +771,15 @@ For each combination, the number of times this combination has occurred (frequen
 ##### Answering Order Combinations with Frequency >= 3
 ``` {r AnsweringOrderFiltered, echo = FALSE}
 dfEpisodeData$PanelistSweep <- mapply(ifelse, test = (dfEpisodeData$CorrectAnswers == dfEpisodeData$TotalPanelists), yes = 1, no = 0 )
+dfEpisodeData$HostSweep <- mapply(ifelse, test = (dfEpisodeData$CorrectAnswers == 0), yes = 1, no = 0 )
 
-dfAnsweringOrderPerf <- dfEpisodeData%>% group_by(FirstPanelist, SecondPanelist, ThirdPanelist, FourthPanelist, FifthPanelist)  %>% summarise(Occurred = sum(n()), TotalCorrect = sum(CorrectAnswers), TotalAnswers = sum(TotalPanelists), TotalPanelistSweeps = sum(PanelistSweep), PercentCorrect = TotalCorrect / TotalAnswers * 100) %>% arrange(desc(PercentCorrect), desc(Occurred))
+dfAnsweringOrderPerf <- dfEpisodeData%>% group_by(FirstPanelist, SecondPanelist, ThirdPanelist, FourthPanelist, FifthPanelist)  %>% summarise(Occurred = sum(n()), TotalCorrect = sum(CorrectAnswers), TotalAnswers = sum(TotalPanelists), TotalPanelistSweeps = sum(PanelistSweep), TotalHostSweeps = sum(HostSweep), PercentCorrect = TotalCorrect / TotalAnswers * 100) %>% arrange(desc(PercentCorrect), desc(Occurred))
 
-names(dfAnsweringOrderPerf) <- c('First', 'Second', 'Third', 'Fourth', 'Fifth', 'Frequency', 'Correct', 'Possible','Sweeps', 'Accuracy(%)')
-kable(dfAnsweringOrderPerf %>% filter(Frequency >=3), format.args = list(justify='right', width=500) , rownames=FALSE, digits=1, align = c('l', 'l', 'l','l','l','c','c','c','c', 'r'),format='html',table.attr = "style='width:75%;'")
+names(dfAnsweringOrderPerf) <- c('First', 'Second', 'Third', 'Fourth', 'Fifth', 'Frequency', 'Correct', 'Possible','PanelistSweeps', 'HostSweeps', 'Accuracy(%)')
+kable(dfAnsweringOrderPerf %>% filter(Frequency >=3), format.args = list(justify='right', width=1000) , rownames=FALSE, digits=1, align = c('l', 'l', 'l','l','l','c','c','c','c', 'c', 'r'),format='html',table.attr = "style='width:100%;'")
 ```
 ##### Answering Order Combinations Full Detail
 ``` {r AnsweringOrderUnfiltered, echo = FALSE}
-kable(dfAnsweringOrderPerf, format.args = list(justify='right', width=500) , rownames=FALSE, digits=1, align = c('l', 'l', 'l','l','l','c','c','c','c', 'r'),format='html',table.attr = "style='width:75%;'")
+kable(dfAnsweringOrderPerf, format.args = list(justify='right', width=1000) , rownames=FALSE, digits=1, align = c('l', 'l', 'l','l','l','c','c','c','c', 'c', 'r'),format='html',table.attr = "style='width:100%;'")
 ```
 
