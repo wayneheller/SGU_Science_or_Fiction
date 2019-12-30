@@ -1,7 +1,7 @@
 ---
 title: "SGU 2019 Science or Fiction Stats"
 author: "Wayne Heller"
-date: "December 22, 2019"
+date: "December 30, 2019"
 output: html_document
 ---
 
@@ -20,7 +20,7 @@ library(gridExtra)
 library(forcats)
 
 debug_flag = FALSE # See description below.  If TRUE, will show the summarization values from spreadsheet as a validation
-Episode_range_TY = 704:754
+Episode_range_TY = 704:755
 Episode_range_LY = 652:703
 Current_Year = 2019 # There is one place in the code where I've not yet been able to parameterize the Current Year.  Do a Seach and Replace to find.
 Last_Year = 2018
