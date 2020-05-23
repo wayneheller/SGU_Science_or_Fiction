@@ -1,7 +1,7 @@
 ---
-title: "SGU 2019 Science or Fiction Stats"
+title: "SGU 2020 Science or Fiction Stats"
 author: "Wayne Heller"
-date: "December 30, 2019"
+date: "May 23, 2020"
 output: html_document
 ---
 
@@ -20,13 +20,15 @@ library(gridExtra)
 library(forcats)
 
 debug_flag = FALSE # See description below.  If TRUE, will show the summarization values from spreadsheet as a validation
-Episode_range_TY = 704:755
-Episode_range_LY = 652:703
-Current_Year = 2019 # There is one place in the code where I've not yet been able to parameterize the Current Year.  Do a Seach and Replace to find.
-Last_Year = 2018
+Episode_range_TY = 756:766
+Episode_range_LY = 704:755
+Mulligan_Episodes = c(766)
+Current_Year = 2020 # There is one place in the code where I've not yet been able to parameterize the Current Year.  Do a Seach and Replace to find.
+Last_Year = 2019
 XL_SHEET_2017_SUMMARY = 4
 XL_SHEET_2018_SUMMARY = 5
 XL_SHEET_2019_SUMMARY = 6
+XL_SHEET_2020_SUMMARY = 7
 ```
 
 ## Background
@@ -37,17 +39,8 @@ At the end of the calendar year, Dr. Novella host a year in review episode where
 
 ## `r Current_Year` Summary - Episodes# `r Episode_range_TY [1]` - `r tail(Episode_range_TY ,1)`
 
-* NOTE: Episode 715 excluded - the correct answer was contested and negated in a subsequent episode.
-* Cara Wins Overall and had best performance on questions with and withouts themes
-* Panelist performance on questions without a theme decreased dramatically from last year (except for Cara)
-* The panel performs best with Cara or Bob answer first
-* Going first is a disadvantage for everyone except Cara this year
-* Steve had twice as many host sweeps this year compared to last
-* There were fewer panelist sweeps this year compared to last
-* Steve snapped a 6 game losing streak as panelist starting with episode 686.
-* Bob should consider GWC Go with Cara more often
-* Over the last 2 years, the answering order of {Cara, Jay, Evan, Bob} and {Cara, Bob, Evan, Jay} have answered correctly over 80% of the time.
-* Over the same period, the answering order of {Jay, Bob, Evan, Cara} has only answered correctly 33% of the time.
+* NOTE: Episode 766  - the correct answer was negated in a subsequent episode due to an error in the question. A correct answer is awarded to all panelists for this episode.
+
 
 ## `r Current_Year` Summary Statistics 
  
@@ -66,7 +59,7 @@ Rogues <- c("Steve", "Bob", "Evan", "Cara", "Jay")
 
 # Creates a dataframe from the Summary Results tab of the Excel file
 # Can be used as a validation to check calculations and to pull out summaries from 2017 when the data collection approach was different.  Did not begin using Answers tab until 2018
-dfSGUSummary <- readxl::read_excel(pathtofile, sheet = XL_SHEET_2019_SUMMARY )
+dfSGUSummary <- readxl::read_excel(pathtofile, sheet = XL_SHEET_2020_SUMMARY )
 dfSGUSummary <- as.data.frame(dfSGUSummary)
 rownames(dfSGUSummary) <- dfSGUSummary$Statistic
 dfSGUSummary <- select(dfSGUSummary, -Statistic)
@@ -89,6 +82,9 @@ dfFictionItems <- select(dfEpisodeData, c('Episode', 'FictionItem', 'Theme'))
 
 dfItemsSelected <- inner_join(dfItemsSelected, dfFictionItems, by='Episode')
 dfItemsSelected$Correct <- mapply(ifelse, test = (dfItemsSelected$ItemSelected == dfItemsSelected$FictionItem), yes = 1, no = 0 )
+# In 2020 Added this code to handle handle episodes that due to an issue with the question(s), all panelists answers are deemed correct.
+#dfItemsSelected <- filter(dfItemsSelected, Episode %in% Mulligan_Episodes) %>% mutate(Correct = 1)
+dfItemsSelected[dfItemsSelected$Episode %in% Mulligan_Episodes,]$Correct = 1
 dfItemsSelected$Theme <- mapply(ifelse, test = !is.na(dfItemsSelected$Theme), yes = 'With Theme', no = 'Without Theme')
 
 dfPanelistPerf <- dfItemsSelected %>% select(Episode, AnsweringOrder, Correct, Panelist, Theme) %>% filter(Panelist %in% Rogues) 
@@ -417,7 +413,8 @@ grid.arrange(grobs=list(p_final, t), layout_matrix=lay)
 #print(p_final)
 #print(t)
 
-
+print(dfItemsSelected_TY)
+print(filter(dfItemsSelected, Episode %in% Mulligan_Episodes) %>% mutate(Correct=1))
 ```
 
 **NOTE: ALL includes contributions from Special Guest Rogues not listed**  
@@ -617,7 +614,7 @@ statYoY <- merge(statTY, statLY, by = 'Panelist')
 
 names(statYoY) <- c('Panelist', Current_Year, Last_Year)
 
-statYoY <- statYoY %>% arrange(desc(`2019`))
+statYoY <- statYoY %>% arrange(desc(`2020`))
 kable(statYoY, format.args = list(justify='right', width=500) , rownames=TRUE,  digits=1, align = c('l', 'c', 'c'), format='html', table.attr = "style='width:25%;'")
 ```
 
@@ -650,7 +647,7 @@ names(statLY) <- c('Panelist', 'PanelPerformance')
 #showStatistic_2(statLY2)
 statYoY <- merge(statTY, statLY, by = 'Panelist') 
 names(statYoY) <- c('Panelist', Current_Year, Last_Year)
-statYoY <- statYoY %>% arrange(desc(`2019`))
+statYoY <- statYoY %>% arrange(desc(`2020`))
 kable(statYoY, format.args = list(justify='right', width=500) , rownames=TRUE,  digits=1, align = c('l', 'c', 'c'), format='html', table.attr = "style='width:25%;'")
 ```
 
@@ -689,7 +686,7 @@ statYoY <- merge(statTY, statLY, by = 'Panelist', all = TRUE)
 
 names(statYoY) <- c('Host', Current_Year, Last_Year)
 
-statYoY <- statYoY %>% arrange(desc(`2019`))
+statYoY <- statYoY %>% arrange(desc(`2020`))
 kable(statYoY, format.args = list(justify='right', width=500) , rownames=TRUE,  digits=1, align = c('l', 'c', 'c'), format='html', table.attr = "style='width:25%;'")
 ```
 
@@ -721,7 +718,7 @@ statYoY <- merge(statTY, statLY, by = 'Panelist')
 
 names(statYoY) <- c('Panelist', Current_Year, Last_Year)
 
-statYoY <- statYoY %>% arrange(desc(`2019`))
+statYoY <- statYoY %>% arrange(desc(`2020`))
 kable(statYoY, format.args = list(justify='right', width=500) , rownames=TRUE,  digits=1, align = c('l', 'c', 'c'), format='html', table.attr = "style='width:25%;'")
 ```
 
