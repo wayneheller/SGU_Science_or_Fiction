@@ -20,7 +20,7 @@ library(gridExtra)
 library(forcats)
 
 debug_flag = FALSE # See description below.  If TRUE, will show the summarization values from spreadsheet as a validation
-Episode_range_TY = 756:766
+Episode_range_TY = 756:776
 Episode_range_LY = 704:755
 Mulligan_Episodes = c(766)
 Current_Year = 2020 # There is one place in the code where I've not yet been able to parameterize the Current Year.  Do a Seach and Replace to find.
@@ -83,7 +83,6 @@ dfFictionItems <- select(dfEpisodeData, c('Episode', 'FictionItem', 'Theme'))
 dfItemsSelected <- inner_join(dfItemsSelected, dfFictionItems, by='Episode')
 dfItemsSelected$Correct <- mapply(ifelse, test = (dfItemsSelected$ItemSelected == dfItemsSelected$FictionItem), yes = 1, no = 0 )
 # In 2020 Added this code to handle handle episodes that due to an issue with the question(s), all panelists answers are deemed correct.
-#dfItemsSelected <- filter(dfItemsSelected, Episode %in% Mulligan_Episodes) %>% mutate(Correct = 1)
 dfItemsSelected[dfItemsSelected$Episode %in% Mulligan_Episodes,]$Correct = 1
 dfItemsSelected$Theme <- mapply(ifelse, test = !is.na(dfItemsSelected$Theme), yes = 'With Theme', no = 'Without Theme')
 
@@ -410,11 +409,8 @@ p_final <- ggplot(summary_final, aes(x=Panelist, y=Statistic)) + geom_bar(aes(fi
 lay <- rbind(c(1), c(1), c(1), c(2))
 
 grid.arrange(grobs=list(p_final, t), layout_matrix=lay)
-#print(p_final)
-#print(t)
 
-print(dfItemsSelected_TY)
-print(filter(dfItemsSelected, Episode %in% Mulligan_Episodes) %>% mutate(Correct=1))
+
 ```
 
 **NOTE: ALL includes contributions from Special Guest Rogues not listed**  
@@ -698,6 +694,9 @@ showStatistic('Panelist Sweeps', ispercentage = FALSE)
 
 ``` {r PanelSweeps, echo = FALSE}
 statTY <- dfItemsSelected_TY[dfItemsSelected_TY$Episode %in% dfEpisodeData_TY[dfEpisodeData_TY$CorrectAnswers == dfEpisodeData_TY$TotalPanelists,"Episode"],] %>% group_by(Panelist) %>% summarise(PanelistSweeps = n()) %>% filter(Panelist %in% Rogues) %>% arrange(desc(PanelistSweeps))
+
+#dfItemsSelected_TY[dfItemsSelected_TY$Episode %in% dfEpisodeData_TY[dfEpisodeData_TY$CorrectAnswers == dfEpisodeData_TY$TotalPanelists,"Episode"],] %>% group_by(Panelist) %>% summarise(PanelistSweeps = n()) %>% filter(Panelist %in% Rogues) %>% arrange(desc(PanelistSweeps))
+
 #showStatistic_2(statTY)
 statLY <- dfItemsSelected_LY[dfItemsSelected_LY$Episode %in% dfEpisodeData_LY[dfEpisodeData_LY$CorrectAnswers == dfEpisodeData_LY$TotalPanelists,"Episode"],] %>% group_by(Panelist) %>% summarise(PanelistSweeps = n()) %>% filter(Panelist %in% Rogues) %>% arrange(desc(PanelistSweeps))
 
@@ -714,7 +713,7 @@ statLY <- dfItemsSelected_LY[dfItemsSelected_LY$Episode %in% dfEpisodeData_LY[df
 
 names(statTY) <- c('Panelist', 'PanelPerformance')
 names(statLY) <- c('Panelist', 'PanelPerformance')
-statYoY <- merge(statTY, statLY, by = 'Panelist') 
+statYoY <- merge(statTY, statLY, by = 'Panelist', all = TRUE) 
 
 names(statYoY) <- c('Panelist', Current_Year, Last_Year)
 
