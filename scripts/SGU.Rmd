@@ -1,7 +1,7 @@
 ---
-title: "SGU 2020 Science or Fiction Stats"
+title: "SGU 2021 Science or Fiction Stats"
 author: "Wayne Heller"
-date: "January 1, 2021"
+date: "January 2, 2022"
 output: html_document
 ---
 
@@ -20,15 +20,16 @@ library(gridExtra)
 library(forcats)
 
 debug_flag = FALSE # See description below.  If TRUE, will show the summarization values from spreadsheet as a validation
-Episode_range_TY = 756:807
-Episode_range_LY = 704:755
+Episode_range_TY = 808:860
+Episode_range_LY = 756:807
 Mulligan_Episodes = c(766)
-Current_Year = 2020 # There is one place in the code where I've not yet been able to parameterize the Current Year.  Do a Seach and Replace to find.
-Last_Year = 2019
+Current_Year = 2021 # There is one place in the code where I've not yet been able to parameterize the Current Year.  Do a Seach and Replace to find.
+Last_Year = 2020
 XL_SHEET_2017_SUMMARY = 4
 XL_SHEET_2018_SUMMARY = 5
 XL_SHEET_2019_SUMMARY = 6
 XL_SHEET_2020_SUMMARY = 7
+XL_SHEET_2021_SUMMARY = 8
 ```
 
 ## Background
@@ -38,40 +39,38 @@ The Skeptics Guide to the Universe is a weekly podcast hosted by Dr. Steven Nove
 At the end of the calendar year, Dr. Novella host a year in review episode where the panel reviews their performance at Science or Fiction.  
 
 ## `r Current_Year` Summary - Episodes# `r Episode_range_TY [1]` - `r tail(Episode_range_TY ,1)`
-* Overall Winner; Steve (66.7%)
+* Overall Winner; Cara (67.4%)
 
-* Second Place: Cara (65%), Third Place: Evan (56.25%), Fourth Place: Jay (56%), Fifth Place: Bob (51%)
+* Second Place: Jay (62.5%), Third Place: Evan (59.2%), Fourth Place: Bob (51.0%)
 
-* Overall, the panel guessed correct 57% of the time in 2020 compared to 56% of the time in 2019
+* Overall, the panel guessed correct 59% of the time in 2021 compared to 57% of the time in 2020
 
-* Most solo Wins: Cara (3)
+* Most solo Wins: Cara, Jay and Evan (3)
 
-* Longest Consecutive Win Streak: Cara (7) and Bob (7)
+* Longest Consecutive Win Streak: Evan (8) and Bob (8, spanning end of 2020 into 2021)
 
-* Longest Consecutive Losing Streak: Cara and Bob tied (5)
+* Longest Consecutive Losing Streak: Jay (4), Note that George's losing streak is currently 6 starting back at episode 763 at the start of 2020.
 
-* The panel performs bests when Jay answers first.  63% correct guesses.  Jay was last in this category in 2019 and first in 2020.  Steve, please note that Bob and Jay were asked to answer first 13 times, Cara 11 and Evan 9 putting Jay and Bob at a disadvantage compared to Evan and Cara.
+* The panel performed bests when Bob answers first (71%).  Bob was last in this category in 2020 and first in 2021.  
 
-* Cara answered correctly 55% of the time when answering first--highest on the panel this year and last.  Overall the panel as a group performed better when answering first this year compared to last.
+* Bob answered correctly 57% of the time when answering first which is exceptionally high compared to the average this year and past years.  Overall the panel as a group performed a bit worse when answering first this year compared to last 38% compared to 42%. Steve, please note that Evan was asked to answer first 16 times, Bob 14 times, Cara 11 times and Jay 10 times.
 
-* Steve swept the panel 7 times this year compared to 4 last year.
+* Steve swept the panel 5 times this year compared to 7 last year.
 
-* The panel swept Steve 10 times this year compared to 8 last year.
+* The panel swept Steve 10 times this year same as last year.
 
-* Since 2018, the answering order of Cara, Evan, Bob and Jay has answered 86% correctly during that time - 24 correct guesses out of 28 possible and includes the most hosts sweeps (4).
+* Since 2018, the answering order of Bob, Jay, Evan  and Cara has answered 82% correctly during that time - 23 correct guesses out of 28 possible and includes the most panelist sweeps (4). In comparison, the answering order of Evan, Bob, Cara, Jay has answered 42% correctly during this time - 15 correct guesses out of 36 possible with no panelist sweeps.
 
-* NOTE: Episode 766  - the correct answer was negated in a subsequent episode due to an error in the question. A correct answer is awarded to all panelists for this episode.
 
 ### Summary By Rouge:
-* Steve has the highest win percentage overall (66.7%) and on questions with a theme (66.7%)
 
-* Cara has the second highest win percentage overall (65%), the most solo wins (3), the longest consecutive winning streak (7) tied with Bob, the highest win percentage when answering first (55%) and is tied with Bob for highest win percentage for questions without a theme (74%) and is tied with Bob for longest consecutive losing streak (5).
+* Cara has the  highest win percentage overall (67%), the most solo wins (3) tied with Jay and Evan, the highest win percentage on segments with themes (72%).
 
-* Jay has the fourth highest win percentage overall (56%), second highest solo wins (2), and the panel performs best when he answers first.
+* Jay has the second highest win percentage overall (62%) and tied with Cara and Evan for most solo wins (3).
 
-* Evan has the third highest win percentage overall (56.25%) and is tied with Jay for participating in the most panel sweeps (10)
+* Evan has the third highest win percentage overall (59%), the highest win percentage on segments without themes (61%), and is tied with Bob with the longest win streak (8), and is tied with Cara and Jay for most solo wins (3).
 
-* Bob has the fifth highest win percentage overall (51%), is tied with Cara for highest win percentage for questions without a theme (74%) and also tied for the longest losing streak (5) and longest winning streak (7).
+* Bob has the fourth highest win percentage overall (51%) and is tied with Evan with longest win streak (8) - his streak carried over from 2020.
 
 
 
@@ -92,7 +91,7 @@ Rogues <- c("Steve", "Bob", "Evan", "Cara", "Jay")
 
 # Creates a dataframe from the Summary Results tab of the Excel file
 # Can be used as a validation to check calculations and to pull out summaries from 2017 when the data collection approach was different.  Did not begin using Answers tab until 2018
-dfSGUSummary <- readxl::read_excel(pathtofile, sheet = XL_SHEET_2020_SUMMARY )
+dfSGUSummary <- readxl::read_excel(pathtofile, sheet = XL_SHEET_2021_SUMMARY )
 dfSGUSummary <- as.data.frame(dfSGUSummary)
 rownames(dfSGUSummary) <- dfSGUSummary$Statistic
 dfSGUSummary <- select(dfSGUSummary, -Statistic)
@@ -362,6 +361,7 @@ names(summary2b) <- c("Result", "Panelist", "Statistic")
 summary2b_wide <- dcast(summary2b, Result ~ Panelist) %>% select(c('Result', panelistLevels))
 
 summary2 <- summary2 %>% arrange(desc(Statistic))
+
 WithThemeLeader <- summary2[1,2]
 ```
 ``` {r Plots_dataprep_summary3, echo = FALSE, message = FALSE}
@@ -404,8 +404,10 @@ summary3b_wide[setdiff(panelistLevels, names(summary3b_wide))] <- NA
 summary3b_wide <- summary3b_wide %>% select(c('Result', panelistLevels))
 
 summary3 <- summary3 %>% arrange(desc(Statistic))
-WithoutThemeLeader <- summary3[1,2]
-WithoutThemeLeader <- mapply(ifelse, test = (summary3[1,3] == summary3[2,3]), yes = paste(summary3[1,2], summary3[2,2], sep = ' and '), no = summary3[1,2])
+
+WithoutThemeLeader <- as.character(summary3[1,2]) # convert this factor to a character so that the mapply no condition returns the name not an integer
+
+WithoutThemeLeader <- mapply(ifelse, test = (summary3[1,3] == summary3[2,3]), yes = paste(summary3[1,2], summary3[2,2], sep = ' and '), no = WithoutThemeLeader)
 
 #summary3b_wide <- dcast(summary3b, Result ~ Panelist)  %>% select(c('Result', panelistLevels))
 ```
